@@ -1,0 +1,24 @@
+# OS & IDE
+.DS_Store
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# Gradle / Java / Kotlin
+backend/.gradle/
+backend/build/
+backend/out/
+*.class
+uploads/
+
+# Node / React
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker
+.docker/
