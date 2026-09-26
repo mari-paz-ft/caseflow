@@ -12,7 +12,8 @@
 - [4. Entregáveis da Prática](#4-entregáveis-da-prática)
   - [4.1 Prompt de Geração de Contexto](#41-prompt-de-geração-de-contexto)
   - [4.2 Prompt de Implementação](#42-prompt-de-implementação)
-  - [4.3 Roteiro para Gravação do Vídeo de Demonstração](#43-roteiro-para-gravação-do-vídeo-de-demonstração)
+  - [4.3 Prompt de Evolução da Arquitetura (3 Microsserviços)](#43-prompt-de-evolução-da-arquitetura-3-microsserviços)
+  - [4.4 Roteiro para Gravação do Vídeo de Demonstração](#44-roteiro-para-gravação-do-vídeo-de-demonstração)
 - [5. Como Executar o Projeto](#5-como-executar-o-projeto)
   - [5.1 Executando o Frontend React (Demonstração Imediata)](#51-executando-o-frontend-react-demonstração-imediata)
   - [5.2 Executando o Backend Kotlin](#52-executando-o-backend-kotlin)
@@ -46,11 +47,11 @@ caseflow/
 │   └── business-rules.md                 # Regras de negócio, status e permissões
 ├── .cursorrules                          # Regras de contexto para Cursor / IDEs
 ├── .geminirules                          # Regras de contexto para Antigravity / Gemini
-├── prompts/                              # Prompts solicitados pela atividade
-│   ├── 01-prompt-contexto.md             # Prompt que gera a estrutura de contexto .ai/
-│   └── 02-prompt-implementacao.md        # Prompt executável por agentes para o MVP
-├── docs/
-│   └── CaseFlow-Arquitetura-Pratica.md   # Documento original de arquitetura da Aula 1
+├── docs/                                 # Documentação e prompts da prática
+│   ├── 01-prompt-contexto.md             # Prompt 1: Geração da estrutura de contexto .ai/
+│   ├── 02-prompt-implementacao.md        # Prompt 2: Implementação do MVP por agentes autônomos
+│   ├── 03-prompt-arquitetura-microservicos.md # Prompt 3: Evolução para 3 microsserviços e backlog
+│   └── CaseFlow-Arquitetura-Pratica.md   # Especificação arquitetural e requisitos da prática
 ├── backend/                              # Microsserviço Backend em Kotlin
 │   ├── build.gradle.kts                  # Configuração Gradle com Kotlin DSL
 │   ├── pom.xml                           # Configuração Maven alternativa
@@ -85,14 +86,18 @@ Seguindo as boas práticas ensinadas na **Aula 2 (Context Engineering)**, o proj
 ## 4. Entregáveis da Prática
 
 ### 4.1 Prompt de Geração de Contexto
-Disponível em [`prompts/01-prompt-contexto.md`](prompts/01-prompt-contexto.md).  
+Disponível em [`docs/01-prompt-contexto.md`](docs/01-prompt-contexto.md).  
 Instrui a IA a interpretar o documento de arquitetura (`CaseFlow-Arquitetura-Pratica.md`) e construir com precisão a estrutura `.ai/` com os 4 arquivos essenciais.
 
 ### 4.2 Prompt de Implementação
-Disponível em [`prompts/02-prompt-implementacao.md`](prompts/02-prompt-implementacao.md).  
+Disponível em [`docs/02-prompt-implementacao.md`](docs/02-prompt-implementacao.md).  
 Prompt em formato de instrução para agente autônomo (ex: Google Antigravity) para ler `.ai/` e implementar o código completo do Backend Kotlin e Frontend React.
 
-### 4.3 Roteiro para Gravação do Vídeo de Demonstração
+### 4.3 Prompt de Evolução da Arquitetura (3 Microsserviços)
+Disponível em [`docs/03-prompt-arquitetura-microservicos.md`](docs/03-prompt-arquitetura-microservicos.md).  
+Prompt para agentes autônomos atualizarem a governança e contexto em `.ai/` para a arquitetura-alvo com 3 microsserviços (BFF, serviço de negócio e serviço de autenticação OAuth2/OIDC) e gerarem o backlog persistente em `.ai/tasks.md`.
+
+### 4.4 Roteiro para Gravação do Vídeo de Demonstração
 *(Para a gravação do vídeo entre 3 e 10 minutos exigido na entrega)*:
 1. **Introdução (1 min):** Apresentar a estrutura `.ai/` e demonstrar como os prompts guiaram o desenvolvimento do repositório no Google Antigravity.
 2. **Visão do Solicitante (2-3 min):**
