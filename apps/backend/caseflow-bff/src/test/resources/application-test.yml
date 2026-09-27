@@ -1,0 +1,6 @@
+caseflow:
+  jwt:
+    secret: caseflow-test-only-secret-value-0123456789
+  downstream:
+    auth-service-url: http://localhost:8082
+    case-service-url: http://localhost:8080

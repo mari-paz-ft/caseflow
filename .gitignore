@@ -6,19 +6,28 @@
 *.swp
 
 # Gradle / Java / Kotlin
-backend/.gradle/
-backend/build/
-backend/out/
+apps/backend/*/.gradle/
+apps/backend/*/build/
+apps/backend/*/out/
 *.class
-uploads/
+apps/backend/case-service/data/documents/
+data/documents/
 
 # Node / React
-frontend/node_modules/
-frontend/dist/
-frontend/.vite/
+apps/frontend/caseflow-web/node_modules/
+apps/frontend/caseflow-web/dist/
+apps/frontend/caseflow-web/.vite/
+
+# Local execution prompt records
+/docs/prompts/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Environment secrets
+.env
+.env.*
+!.env.example
 
 # Docker
 .docker/

@@ -1,0 +1,43 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: case-service
+  datasource:
+    url: ${CASE_DB_URL:jdbc:postgresql://localhost:5432/case_db}
+    username: ${CASE_DB_USERNAME:caseflow}
+    password: ${CASE_DB_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 15MB
+
+caseflow:
+  rules-version: DOCUMENTAL_V1
+  upload-dir: ./data/documents
+  jwt:
+    secret: ${CASEFLOW_JWT_SECRET}
+  scheduler:
+    enabled: ${CASEFLOW_SCHEDULER_ENABLED:true}
+    poll-interval-ms: ${CASEFLOW_SCHEDULER_POLL_INTERVAL_MS:1000}
+    lease-seconds: ${CASEFLOW_SCHEDULER_LEASE_SECONDS:30}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.caseflow: INFO
+    org.springframework.web: INFO

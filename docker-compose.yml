@@ -1,43 +1,136 @@
-version: '3.8'
-
 services:
-  postgres:
+  auth-db:
     image: postgres:16-alpine
-    container_name: caseflow-postgres
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: ${AUTH_DB_USERNAME:-caseflow}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD:?Set AUTH_DB_PASSWORD in the environment}
+    volumes:
+      - authdbdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    networks:
+      - caseflow
+
+  case-db:
+    image: postgres:16-alpine
     environment:
       POSTGRES_DB: case_db
-      POSTGRES_USER: caseflow
-      POSTGRES_PASSWORD: caseflow_secret
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${CASE_DB_USERNAME:-caseflow}
+      POSTGRES_PASSWORD: ${CASE_DB_PASSWORD:?Set CASE_DB_PASSWORD in the environment}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - casedata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    networks:
+      - caseflow
 
-  backend:
+  auth-service:
     build:
-      context: ./backend
+      context: ./apps/backend/auth-service
       dockerfile: Dockerfile
-    container_name: caseflow-backend
-    ports:
-      - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/case_db
-      SPRING_DATASOURCE_USERNAME: caseflow
-      SPRING_DATASOURCE_PASSWORD: caseflow_secret
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
+      SERVER_PORT: 8080
+      AUTH_DB_URL: jdbc:postgresql://auth-db:5432/auth_db
+      AUTH_DB_USERNAME: ${AUTH_DB_USERNAME:-caseflow}
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:?Set AUTH_DB_PASSWORD in the environment}
+      CASEFLOW_JWT_SECRET: ${CASEFLOW_JWT_SECRET:?Set CASEFLOW_JWT_SECRET in the environment}
+      CASEFLOW_JWT_TTL_SECONDS: ${CASEFLOW_JWT_TTL_SECONDS:-3600}
     depends_on:
-      - postgres
+      auth-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
+    networks:
+      - caseflow
 
-  frontend:
+  case-service:
     build:
-      context: ./frontend
+      context: ./apps/backend/case-service
       dockerfile: Dockerfile
-    container_name: caseflow-frontend
+    environment:
+      SERVER_PORT: 8080
+      CASE_DB_URL: jdbc:postgresql://case-db:5432/case_db
+      CASE_DB_USERNAME: ${CASE_DB_USERNAME:-caseflow}
+      CASE_DB_PASSWORD: ${CASE_DB_PASSWORD:?Set CASE_DB_PASSWORD in the environment}
+      CASEFLOW_JWT_SECRET: ${CASEFLOW_JWT_SECRET:?Set CASEFLOW_JWT_SECRET in the environment}
+      CASEFLOW_SCHEDULER_ENABLED: "true"
+      CASEFLOW_SCHEDULER_POLL_INTERVAL_MS: 1000
+      CASEFLOW_SCHEDULER_LEASE_SECONDS: 30
+      CASEFLOW_UPLOAD_DIR: /app/data/documents
+    volumes:
+      - ./data/documents:/app/data/documents
+    depends_on:
+      case-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 30
+      start_period: 45s
+    networks:
+      - caseflow
+
+  caseflow-bff:
+    build:
+      context: ./apps/backend/caseflow-bff
+      dockerfile: Dockerfile
+    environment:
+      SERVER_PORT: 8081
+      AUTH_SERVICE_URL: http://auth-service:8080
+      CASE_SERVICE_URL: http://case-service:8080
+      CASEFLOW_JWT_SECRET: ${CASEFLOW_JWT_SECRET:?Set CASEFLOW_JWT_SECRET in the environment}
+    ports:
+      - "8081:8081"
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      case-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8081/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
+    networks:
+      - caseflow
+
+  caseflow-web:
+    build:
+      context: ./apps/frontend/caseflow-web
+      dockerfile: Dockerfile
     ports:
       - "5173:80"
     depends_on:
-      - backend
+      caseflow-bff:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    networks:
+      - caseflow
 
 volumes:
-  pgdata:
+  authdbdata:
+  casedata:
+
+networks:
+  caseflow:
+    driver: bridge
