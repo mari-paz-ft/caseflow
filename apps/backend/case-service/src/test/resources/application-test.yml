@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:case_test;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+caseflow:
+  upload-dir: ./build/test-data/documents
+  jwt:
+    secret: caseflow-test-only-secret-value-0123456789
+  scheduler:
+    enabled: false
+    lease-seconds: 30

@@ -15,8 +15,8 @@
   - [4.3 Prompt de Evolução da Arquitetura (3 Microsserviços)](#43-prompt-de-evolução-da-arquitetura-3-microsserviços)
   - [4.4 Roteiro para Gravação do Vídeo de Demonstração](#44-roteiro-para-gravação-do-vídeo-de-demonstração)
 - [5. Como Executar o Projeto](#5-como-executar-o-projeto)
-  - [5.1 Executando o Frontend React (Demonstração Imediata)](#51-executando-o-frontend-react-demonstração-imediata)
-  - [5.2 Executando o Backend Kotlin](#52-executando-o-backend-kotlin)
+  - [5.1 Executando o Frontend React](#51-executando-o-frontend-react)
+  - [5.2 Executando os Serviços Backend Kotlin](#52-executando-os-serviços-backend-kotlin)
   - [5.3 Executando via Docker Compose](#53-executando-via-docker-compose)
 - [6. Credenciais de Teste e Cenários Mockados](#6-credenciais-de-teste-e-cenários-mockados)
 - [7. Verificação dos Critérios de Aceite](#7-verificação-dos-critérios-de-aceite)
@@ -25,14 +25,15 @@
 
 ## 1. Visão Geral do Sistema
 
-O **CaseFlow** centraliza solicitações e a conferência automatizada de documentos comprobatórios através de um fluxo único, auditável e determinístico. 
+O **CaseFlow** centraliza solicitações e a conferência automatizada de documentos comprobatórios através de um fluxo único, auditável e determinístico.
 
 ### Principais Características
-- **Backend em Kotlin com Spring Boot 3:** Arquitetura limpa em camadas (API, Aplicação, Domínio e Infraestrutura), tipagem estrita e null-safety nativa.
-- **Frontend em React + Vite + TypeScript:** Interface moderna e responsiva com Tailwind CSS e alternador de perfil (USER / ADMIN) para validação rápida de permissões.
-- **Dual Mode (Híbrido):** O frontend suporta execução autônoma instantânea com dados mockados em memória reativos ou conexão direta aos endpoints REST do backend Kotlin (`/bff/v1` e `/api/v1`).
-- **Motor de Regras (`DOCUMENTAL_V1`):** Conferência automática de documentos obrigatórios (`IDENTIFICACAO` e `COMPROVANTE_ENDERECO`) e validade temporal declarada.
-- **Rastreabilidade e Idempotência:** Histórico de auditoria de cada evento com atores (`USER`, `ADMIN`, `SYSTEM`) e proteção com `Idempotency-Key`.
+- **Quatro aplicações independentes:** `caseflow-web`, `caseflow-bff`, `auth-service` e `case-service`, com responsabilidades e processos separados.
+- **Frontend em React + Vite + TypeScript:** interface responsiva que consome exclusivamente as rotas públicas do BFF; não há alternador local de perfil nem fallback de negócio em memória.
+- **Backend em Kotlin com Spring Boot 3:** serviços independentes para BFF, autenticação e domínio documental, com persistência PostgreSQL separada para auth e case.
+- **Autenticação demonstrativa com JWT real:** credenciais não vazias são aceitas pelo auth-service; username contendo `admin` recebe papel `ADMIN` e os demais `USER`. Os serviços validam assinatura, emissor e expiração do token.
+- **Motor de Regras (`DOCUMENTAL_V1`):** conferência determinística das categorias obrigatórias (`IDENTIFICACAO` e `COMPROVANTE_ENDERECO`) e validade declarada; não comprova autenticidade ou conteúdo material.
+- **Processamento durável:** scheduler e jobs persistidos no case-service, com recuperação após restart, retries técnicos e proteção por `Idempotency-Key`.
 
 ---
 
@@ -40,32 +41,29 @@ O **CaseFlow** centraliza solicitações e a conferência automatizada de docume
 
 ```bash
 caseflow/
-├── .ai/                                  # Diretório de Context Engineering
-│   ├── standards.md                      # Padrões de código para Kotlin e React
-│   ├── architecture.md                   # Decisões de arquitetura (ADRs) e diagramas
-│   ├── tech-stack.md                     # Versões de tecnologias e bibliotecas permitidas
-│   └── business-rules.md                 # Regras de negócio, status e permissões
-├── .cursorrules                          # Regras de contexto para Cursor / IDEs
-├── .geminirules                          # Regras de contexto para Antigravity / Gemini
-├── docs/                                 # Documentação e prompts da prática
-│   ├── 01-prompt-contexto.md             # Prompt 1: Geração da estrutura de contexto .ai/
-│   ├── 02-prompt-implementacao.md        # Prompt 2: Implementação do MVP por agentes autônomos
-│   ├── 03-prompt-arquitetura-microservicos.md # Prompt 3: Evolução para 3 microsserviços e backlog
-│   └── CaseFlow-Arquitetura-Pratica.md   # Especificação arquitetural e requisitos da prática
-├── backend/                              # Microsserviço Backend em Kotlin
-│   ├── build.gradle.kts                  # Configuração Gradle com Kotlin DSL
-│   ├── pom.xml                           # Configuração Maven alternativa
-│   ├── gradlew                           # Gradle Wrapper
-│   └── src/
-│       ├── main/kotlin/com/caseflow/     # Código-fonte (controller, service, domain, repo)
-│       └── test/kotlin/com/caseflow/     # Testes unitários do motor de regras
-├── frontend/                             # Aplicação Frontend em React + TypeScript
-│   ├── package.json
-│   ├── vite.config.ts
-│   ├── tailwind.config.js
-│   └── src/                              # Componentes, serviços e páginas
-├── docker-compose.yml                    # Orquestração completa de containers
-└── README.md                             # Documentação principal
+├── .ai/                                      # Configuração canônica do projeto
+├── AGENTS.md                                 # Índice genérico dos arquivos de configuração
+├── .cursorrules                              # Referências às configurações .ai/ para Cursor
+├── .geminirules                              # Referências às configurações .ai/ para Gemini
+├── apps/
+│   ├── backend/
+│   │   ├── auth-service/                     # Login demonstrativo e JWT
+│   │   ├── case-service/                     # Domínio, PostgreSQL, storage e scheduler
+│   │   └── caseflow-bff/                     # API pública e clients downstream
+│   └── frontend/
+│       └── caseflow-web/                     # Interface React + TypeScript
+├── docs/
+│   ├── 01-prompt-contexto.md
+│   ├── 02-prompt-implementacao.md
+│   ├── 03-prompt-arquitetura-microservicos.md
+│   ├── adr/                                  # Decisões de arquitetura
+│   ├── api-contracts.md                      # Contratos HTTP
+│   ├── CaseFlow-Arquitetura-Pratica.md       # Arquitetura e fluxos
+│   ├── compliance-matrix.md                  # Aderência às regras críticas
+│   ├── mvp-scope.md                          # Escopo, mocks e limitações
+│   └── ui-acceptance-checklist.md             # Checklist visual manual
+├── docker-compose.yml                        # Quatro apps e dois bancos PostgreSQL
+└── README.md                                 # Documentação principal
 ```
 
 ---
@@ -76,10 +74,14 @@ Seguindo as boas práticas ensinadas na **Aula 2 (Context Engineering)**, o proj
 
 | Arquivo | Finalidade |
 | :--- | :--- |
-| [`.ai/standards.md`](.ai/standards.md) | Convenções de nomenclatura, injeção de dependências por construtor, DTOs em data classes, padrões React e formato RFC 7807 para erros. |
-| [`.ai/architecture.md`](.ai/architecture.md) | ADRs registrando o uso de Kotlin, executor assíncrono interno, separação entre rejeição de negócio e falha técnica, e idempotência. |
-| [`.ai/tech-stack.md`](.ai/tech-stack.md) | Catálogo restrito de versões permitidas (Kotlin 2.x, Spring Boot 3.3, React 18/19, Tailwind CSS, PostgreSQL/H2). |
-| [`.ai/business-rules.md`](.ai/business-rules.md) | Regras de validação de formulários, categorias documentais, ciclo de vida de status e matriz de permissões. |
+| [`.ai/standards.md`](.ai/standards.md) | Convenções de nomenclatura, injeção por construtor, DTOs em data classes, padrões React e erros seguros. |
+| [`.ai/architecture.md`](.ai/architecture.md) | Decisões sobre quatro aplicações, executor interno persistido, segurança e idempotência. |
+| [`.ai/tech-stack.md`](.ai/tech-stack.md) | Catálogo restrito de Kotlin 2.x, Spring Boot 3.3, React 18, Tailwind CSS, PostgreSQL e H2. |
+| [`.ai/business-rules.md`](.ai/business-rules.md) | Validação de formulários, categorias documentais, ciclo de vida de status e matriz de permissões. |
+
+O arquivo [`AGENTS.md`](AGENTS.md) é um índice genérico sem regras próprias. `.cursorrules` e `.geminirules` apontam diretamente para os quatro arquivos `.ai/` e não mantêm cópias das regras. A configuração canônica permanece na pasta `.ai/`.
+
+As decisões de baseline estão em [`docs/adr/001-mvp-architecture.md`](docs/adr/001-mvp-architecture.md); o escopo observado, mocks e itens fora do MVP estão em [`docs/mvp-scope.md`](docs/mvp-scope.md).
 
 ---
 
@@ -91,90 +93,144 @@ Instrui a IA a interpretar o documento de arquitetura (`CaseFlow-Arquitetura-Pra
 
 ### 4.2 Prompt de Implementação
 Disponível em [`docs/02-prompt-implementacao.md`](docs/02-prompt-implementacao.md).  
-Prompt em formato de instrução para agente autônomo (ex: Google Antigravity) para ler `.ai/` e implementar o código completo do Backend Kotlin e Frontend React.
+Prompt em formato de instrução para agente autônomo (ex: Google Antigravity) ler `.ai/` e implementar o código do Backend Kotlin e Frontend React nas quatro aplicações independentes, preservando os contratos reais entre elas.
 
 ### 4.3 Prompt de Evolução da Arquitetura (3 Microsserviços)
 Disponível em [`docs/03-prompt-arquitetura-microservicos.md`](docs/03-prompt-arquitetura-microservicos.md).  
-Prompt para agentes autônomos atualizarem a governança e contexto em `.ai/` para a arquitetura-alvo com 3 microsserviços (BFF, serviço de negócio e serviço de autenticação OAuth2/OIDC) e gerarem o backlog persistente em `.ai/tasks.md`.
+Prompt para agentes autônomos atualizarem a governança e o contexto `.ai/` para três serviços backend (`caseflow-bff`, `case-service` e `auth-service`) e o frontend independente `caseflow-web`. A autenticação aceita credenciais demonstrativas e usa JWT Bearer real, sem sessão no BFF.
+
+Os contratos HTTP estão em [`docs/api-contracts.md`](docs/api-contracts.md) e a rastreabilidade das regras está em [`docs/compliance-matrix.md`](docs/compliance-matrix.md).
 
 ### 4.4 Roteiro para Gravação do Vídeo de Demonstração
 *(Para a gravação do vídeo entre 3 e 10 minutos exigido na entrega)*:
-1. **Introdução (1 min):** Apresentar a estrutura `.ai/` e demonstrar como os prompts guiaram o desenvolvimento do repositório no Google Antigravity.
-2. **Visão do Solicitante (2-3 min):**
-   - Acessar como Carlos Silva (`ROLE_USER`).
+1. **Introdução (1 min):** apresentar a estrutura `.ai/` e demonstrar como os prompts orientam as quatro aplicações independentes.
+2. **Visão do Solicitante (2–3 min):**
+   - Entrar como `solicitante@caseflow.local` com qualquer senha não vazia.
    - Criar uma nova solicitação em rascunho.
-   - Anexar documento de `IDENTIFICACAO` e demonstrar o aviso de pendência do `COMPROVANTE_ENDERECO`.
+   - Anexar documento `IDENTIFICACAO` e demonstrar a pendência de `COMPROVANTE_ENDERECO`.
    - Enviar a solicitação e observar a rejeição automática com motivo `FALTA_COMPROVANTE_ENDERECO`.
-   - Criar uma solicitação com ambos os documentos válidos e observar a aprovação com veredito `APROVADA`.
+   - Criar uma solicitação com ambos os documentos válidos e observar a aprovação `APROVADA`.
 3. **Visão do Administrador (2 min):**
-   - Alternar para o perfil de Mariana Paz (`ROLE_ADMIN`).
-   - Demonstrar a visão global de todas as solicitações do sistema.
-   - Abrir a solicitação em `FALHA_TECNICA` e acionar o botão **Reprocessar Falha Técnica**.
-   - Preencher a justificativa formal auditável e confirmar a execução.
-4. **Comentários Finais (1 min):** Comentar sobre a eficácia do Context Engineering para mitigar AI Drift e garantir conformidade com as regras de negócio.
+   - Entrar como `admin@caseflow.local` com qualquer senha não vazia.
+   - Demonstrar a visão global das solicitações.
+   - Abrir uma solicitação em `FALHA_TECNICA` e acionar **Reprocessar Falha Técnica**.
+   - Preencher justificativa formal de 10 a 500 caracteres e confirmar.
+4. **Comentários Finais (1 min):** comentar sobre Context Engineering, JWT validado nas fronteiras e recuperação dos jobs após restart.
 
 ---
 
 ## 5. Como Executar o Projeto
 
-### 5.1 Executando o Frontend React (Demonstração Imediata)
-O frontend já possui todas as dependências instaladas e o build validado:
+### 5.1 Executando o Frontend React
+
+O frontend consome apenas o BFF. Para executá-lo isoladamente, inicie auth-service, case-service e caseflow-bff com as dependências PostgreSQL configuradas.
 
 ```bash
-cd frontend
+cd apps/frontend/caseflow-web
+npm ci
+npm test
+npm run build
 npm run dev
 ```
 
-Acesse em seu navegador: **`http://localhost:5173`**
+Acesse em seu navegador: **`http://localhost:5173`**. O proxy Vite encaminha `/api/v1` e `/bff/v1` para o BFF em `localhost:8081`; erros HTTP são apresentados à UI, sem fallback que os transforme em sucesso.
 
-> **Dica:** O frontend possui dados pré-carregados e motor reativo integrado, permitindo demonstrar todas as funcionalidades (criação, anexo, envio, análise assíncrona, notificações e retry de admin) instantaneamente.
+### 5.2 Executando os Serviços Backend Kotlin
 
----
-
-### 5.2 Executando o Backend Kotlin
-Requer JDK 21 instalado:
+Requer JDK 21 instalado e PostgreSQL configurado. Execute cada serviço em um terminal separado; o build backend usa somente Gradle Kotlin DSL.
 
 ```bash
-cd backend
+cd apps/backend/auth-service
 ./gradlew bootRun
 ```
-*(Ou usando Maven: `mvn spring-boot:run`)*
 
-- **API Base:** `http://localhost:8080/bff/v1` e `/api/v1`
-- **Swagger / OpenAPI UI:** `http://localhost:8080/swagger-ui.html`
-- **Console H2 Database:** `http://localhost:8080/h2-console` (JDBC URL: `jdbc:h2:mem:case_db`, usuário: `sa`, senha em branco)
-
-Para executar os testes automatizados do motor de regras:
 ```bash
-cd backend
-./gradlew test
+cd apps/backend/case-service
+./gradlew bootRun
 ```
 
----
+```bash
+cd apps/backend/caseflow-bff
+./gradlew bootRun
+```
+
+Portas locais padrão: auth-service `8082`, case-service `8080` e caseflow-bff `8081`. Configure `AUTH_DB_URL`, `AUTH_DB_USERNAME`, `AUTH_DB_PASSWORD`, `CASE_DB_URL`, `CASE_DB_USERNAME`, `CASE_DB_PASSWORD` e `CASEFLOW_JWT_SECRET` conforme o ambiente. Os testes backend usam H2; não há Console H2 de runtime.
+
+Para executar testes e gerar o JAR, entre no diretório de cada serviço:
+
+```bash
+cd apps/backend/auth-service
+./gradlew clean test
+./gradlew bootJar
+```
+
+```bash
+cd apps/backend/case-service
+./gradlew clean test
+./gradlew bootJar
+```
+
+```bash
+cd apps/backend/caseflow-bff
+./gradlew clean test
+./gradlew bootJar
+```
 
 ### 5.3 Executando via Docker Compose
-Para subir o banco PostgreSQL, o backend Kotlin e o frontend React simultaneamente:
+
+Crie um `.env` local na raiz (ignorado pelo Git) ou exporte as variáveis necessárias:
+
+```dotenv
+CASEFLOW_JWT_SECRET=<segredo local com pelo menos 32 bytes>
+AUTH_DB_PASSWORD=<senha local para auth-db>
+CASE_DB_PASSWORD=<senha local para case-db>
+```
+
+Substitua os marcadores por valores locais reais; não versione nem compartilhe os valores. `AUTH_DB_USERNAME` e `CASE_DB_USERNAME` são opcionais e usam `caseflow` por padrão.
 
 ```bash
-docker-compose up --build
+docker compose config --quiet
+docker compose up --build -d
+docker compose ps
 ```
+
+O Compose executa `caseflow-web`, `caseflow-bff`, `auth-service`, `case-service`, `auth-db` e `case-db`. A interface fica em `http://localhost:5173`; o BFF é publicado em `http://localhost:8081`. Auth-service, case-service e PostgreSQL ficam na rede interna. Documentos persistem no bind mount `./data/documents`; os bancos usam volumes nomeados separados.
+
+Com a stack saudável, o teste E2E pode ser executado em outro terminal:
+
+```bash
+cd apps/frontend/caseflow-web
+npm run test:e2e
+```
+
+O teste reinicia o case-service e grava casos, documentos e notificações nos volumes persistentes; esses dados não são removidos automaticamente.
+
+Para parar sem apagar dados persistidos:
+
+```bash
+docker compose down
+```
+
+Não use `docker compose down -v` se quiser preservar volumes. O antigo volume monolítico `pgdata` não é migrado automaticamente para `case-db` e não é removido pelo Compose atual.
 
 ---
 
 ## 6. Credenciais de Teste e Cenários Mockados
 
-O sistema conta com dois usuários pré-configurados e alternáveis com 1 clique na barra superior:
+O auth-service não persiste contas no MVP. Qualquer username e senha não vazios são aceitos; username contendo `admin` recebe `ADMIN` e os demais recebem `USER`. Apesar da autenticação de credenciais ser demonstrativa, os JWTs são assinados e validados de verdade.
 
-| Perfil | E-mail | Senha | Papel | Capacidades |
-| :--- | :--- | :--- | :--- | :--- |
-| **Carlos Silva** | `solicitante@caseflow.local` | `senha123` | `ROLE_USER` | Criação de rascunhos, anexo de arquivos, envio para análise e consulta às próprias solicitações. |
-| **Mariana Paz** | `admin@caseflow.local` | `admin123` | `ROLE_ADMIN` | Acesso global para suporte, auditoria e reprocessamento exclusivo de casos em `FALHA_TECNICA` com justificativa. |
+| Exemplo de username | Senha | Papel | Capacidades |
+| :--- | :--- | :--- | :--- |
+| `solicitante@caseflow.local` | Qualquer valor não vazio | `ROLE_USER` | Criação de rascunhos, anexos, envio e consulta às próprias solicitações de demonstração. |
+| `admin@caseflow.local` | Qualquer valor não vazio | `ROLE_ADMIN` | Consulta global e retry exclusivo de casos em `FALHA_TECNICA`, com justificativa. |
 
-### Casos de Demonstração Pré-carregados:
-1. `CF-20260922-1001` (**RASCUNHO**): Possui 1 documento anexado. Ideal para testar a inclusão de novos arquivos e o envio para conferência.
-2. `CF-20260922-1002` (**APROVADA**): Possui Identificação e Comprovante de Residência válidos, aprovados na regra `DOCUMENTAL_V1`.
-3. `CF-20260922-1003` (**REJEITADA**): Demonstra a recusa determinística com motivo `FALTA_COMPROVANTE_ENDERECO`.
-4. `CF-20260922-1004` (**FALHA TÉCNICA**): Simulação de falha de infraestrutura. Permite ao Administrador testar o botão **Reprocessar Falha Técnica**.
+### Casos de Demonstração Pré-carregados
+1. `CF-20260922-1001` (**RASCUNHO**): rascunho com metadados de documento.
+2. `CF-20260922-1002` (**APROVADA**): identificação e comprovante de endereço válidos.
+3. `CF-20260922-1003` (**REJEITADA**): demonstra o motivo `FALTA_COMPROVANTE_ENDERECO`.
+4. `CF-20260922-1004` (**FALHA TÉCNICA**): permite demonstrar os retries e o reprocessamento administrativo.
+
+Alguns registros seed têm metadados sem arquivo físico correspondente; sua leitura falha tecnicamente e não fabrica conteúdo PDF.
 
 ---
 
@@ -183,8 +239,9 @@ O sistema conta com dois usuários pré-configurados e alternáveis com 1 clique
 | Critério de Aceite (SDD / Aula 1 & 2) | Implementação no CaseFlow |
 | :--- | :--- |
 | **Isolamento entre usuários** | Solicitante visualiza apenas seus protocolos; Administrador possui visão global auditada. |
-| **Aprovação automática** | Rascunho com `IDENTIFICACAO` e `COMPROVANTE_ENDERECO` vigentes resulta em `APROVADA`. |
-| **Rejeição com códigos de motivo** | Ausência de documento obrigatório ou validade vencida gera `REJEITADA` com tags claras (`FALTA_IDENTIFICACAO`, etc.). |
-| **Idempotência** | Submissão e reprocessamento aceitam cabeçalho `Idempotency-Key` para evitar execuções duplicadas. |
-| **Reprocessamento por Administrador** | Exclusivo para status `FALHA_TECNICA`, incrementa `processingRun` e exige justificativa formal de 10 a 500 caracteres. |
-| **Rastreabilidade e Histórico** | Linha do tempo auditável de cada transição com ator (`USER`, `ADMIN`, `SYSTEM`) e data/hora. |
+| **Aprovação automática** | Rascunho com `IDENTIFICACAO` e `COMPROVANTE_ENDERECO` prontos e vigentes resulta em `APROVADA`. |
+| **Rejeição com códigos de motivo** | Ausência de documento obrigatório ou validade vencida gera `REJEITADA` com códigos claros (`FALTA_IDENTIFICACAO`, etc.). |
+| **Idempotência** | Submit e retry exigem `Idempotency-Key`; replay equivalente não duplica jobs. |
+| **Reprocessamento por Administrador** | Exclusivo para casos em `FALHA_TECNICA`, incrementa `processingRun` e exige justificativa de 10 a 500 caracteres. |
+| **Recuperação após restart** | Jobs persistidos são retomados pelo scheduler do case-service com lease. |
+| **Rastreabilidade e Histórico** | Linha do tempo registra ator (`USER`, `ADMIN`, `SYSTEM`) e data/hora; notificações são internas. |

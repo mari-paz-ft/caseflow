@@ -1,48 +1,67 @@
 # Prompt 2: Implementação do MVP (Executável por Agentes)
 
-Este prompt foi concebido para ser executado por agentes autônomos de desenvolvimento (como o Google Antigravity, Claude Code ou Cursor Composer) para implementar de ponta a ponta o MVP do CaseFlow com backend em Kotlin e frontend em React.
+Este prompt foi concebido para ser executado por agentes autônomos de desenvolvimento (como Google Antigravity, Claude Code ou Cursor Composer) para implementar e validar o MVP do CaseFlow com quatro aplicações independentes.
 
 ---
 
 ```text
-Atue como um Desenvolvedor Fullstack Sênior executando em modo agente.
+Atue como Desenvolvedor Fullstack Sênior executando em modo agente no repositório CaseFlow.
 
-Você irá implementar o MVP do sistema CaseFlow (Solicitações e Conferência Documental) com Backend em Kotlin (Spring Boot 3) e Frontend em React (TypeScript + Vite + Tailwind CSS).
+Você irá implementar o MVP de Solicitações e Conferência Documental conforme os quatro arquivos
+`.ai/` e o ADR 001. Antes de escrever código, leia `.ai/architecture.md`, `.ai/business-rules.md`,
+`.ai/tech-stack.md`, `.ai/standards.md`, `docs/adr/001-mvp-architecture.md` e `docs/mvp-scope.md`.
 
-Antes de iniciar a escrita de código, leia atentamente todos os arquivos em .ai/ (.ai/standards.md, .ai/architecture.md, .ai/tech-stack.md, .ai/business-rules.md) e siga estritamente todas as diretrizes definidas.
+A estrutura executável é:
+- `apps/frontend/caseflow-web` — React, TypeScript e Vite.
+- `apps/backend/caseflow-bff` — entrada pública e clients REST downstream.
+- `apps/backend/auth-service` — autenticação demonstrativa e JWT.
+- `apps/backend/case-service` — domínio documental, persistência e scheduler.
 
-Objetivos de Implementação:
+1. BACKEND (Kotlin + Spring Boot)
+   - Mantenha cada backend como processo e build independente, usando Gradle Kotlin DSL e Java 21.
+   - O auth-service aceita username e senha não vazios sem persistir contas. Username contendo
+     `admin` recebe ADMIN; os demais recebem USER. Emitir JWT HMAC real com subject UUID
+     determinístico, roles, iat, exp e iss `caseflow-auth-service`.
+   - O BFF valida JWT, expõe a API pública do navegador, chama auth-service e case-service por
+     clients REST e mantém DTOs/mappings próprios. Não adicione banco ao BFF.
+   - O case-service valida JWT independentemente, aplica autorização por recurso e possui
+     PostgreSQL em runtime, H2 em testes, histórico e notificações persistidas.
+   - Implemente casos, documentos, resultados e transições conforme `.ai/business-rules.md`.
+     O tipo aceito é `ANALISE_DOCUMENTAL`; valide título e descrição e use `version` nas escritas.
+   - Aceite PDFs apenas com MIME `application/pdf`, tamanho real máximo de 5 MiB e assinatura
+     básica `%PDF-`. Use DocumentStoragePort e storage local; valide tamanho/hash ao ler e jamais
+     fabrique conteúdo quando o arquivo estiver ausente.
+   - Submit e retry exigem `Idempotency-Key`; replay equivalente retorna a resposta original e
+     contexto divergente resulta em 409, sem job duplicado.
+   - Persista ProcessingJob antes do aceite. Use scheduler com lock/lease e recuperação após
+     restart. Retry técnico: primeira falha +10 s, segunda +30 s, terceira termina em
+     `FALHA_TECNICA`; rejeição de negócio não agenda retry. Notifique o titular em cada falha.
+   - Retry ADMIN é permitido apenas em `FALHA_TECNICA` e exige justificativa de 10 a 500 caracteres.
 
-1. BACKEND (Kotlin + Spring Boot 3):
-   - Estrutura em camadas: controller (API/DTO), service (Regras de negócio e Jobs), domain (Entidades JPA, Enums, Exceptions) e repository.
-   - Entidades: CaseRequest, CaseDocument, ProcessingJob, ProcessingResult, CaseHistory, Notification, AppUser, UserRole.
-   - Enums: CaseStatus (RASCUNHO, ENVIADA, PROCESSANDO, APROVADA, REJEITADA, FALHA_TECNICA), DocumentCategory (IDENTIFICACAO, COMPROVANTE_ENDERECO, COMPLEMENTAR).
-   - Motor de Regras: Validar presença obrigatória de IDENTIFICACAO e COMPROVANTE_ENDERECO, validade não expirada, e gerar resultado determinístico com códigos de motivo (ex: FALTA_IDENTIFICACAO, FALTA_COMPROVANTE_ENDERECO, DOCUMENTO_VENCIDO).
-   - Suporte a reprocessamento por ADMIN em FALHA_TECNICA com justificativa.
-   - Idempotência suportada no envio e retry com cabeçalho Idempotency-Key.
-   - Dados iniciais mockados/seed no bootstrap:
-     * Usuário Solicitante (solicitante@caseflow.local / senha123)
-     * Usuário Administrador (admin@caseflow.local / admin123)
-     * Exemplos pré-carregados de solicitações em diferentes estados (Rascunho, Aprovada, Rejeitada com motivos, Falha Técnica).
-   - Perfil H2 pronto para execução local sem dependências de containers obrigatórias.
+2. FRONTEND (React + TypeScript + Vite)
+   - Crie uma interface responsiva com login, lista/detalhe, criação, documentos, submit,
+     resultado, histórico e notificações.
+   - A camada de API chama exclusivamente o BFF, envia `Authorization: Bearer`, mantém JWT em
+     memória e conserva `Idempotency-Key` por intenção do usuário.
+   - Não implemente alternador local de usuário, endpoints diretos de auth-service/case-service ou
+     fallback em memória para mascarar respostas HTTP 4xx/5xx.
+   - Apresente estados claros de carregamento, erro, vazio e sucesso.
 
-2. FRONTEND (React + TypeScript + Vite + Tailwind CSS):
-   - Interface limpa, responsiva e intuitiva inspirada em plataformas corporativas modernas.
-   - Alternador de Usuário (Simulação de Login): Permite alternar rapidamente entre o perfil do Solicitante (USER) e do Administrador (ADMIN) para testar os critérios de aceite e isolamento de dados.
-   - Funcionalidades das telas:
-     * Listagem de solicitações com filtros por status e busca.
-     * Criação de novo rascunho (título e descrição com contadores e validações).
-     * Gestão de documentos: Anexar com categoria e data de validade, pré-visualizar/baixar, remover.
-     * Envio para análise com confirmação e alerta de categorias pendentes.
-     * Visualização detalhada do resultado: Cartão de aprovação/rejeição com tags de códigos de motivo e data.
-     * Linha do tempo de histórico rastreável com atores (USER, ADMIN, SYSTEM).
-     * Ação de reprocessamento visível apenas para ADMIN quando o caso estiver em FALHA_TECNICA com campo de justificativa.
-     * Central de Notificações com badge de não lidas e marcação como lida.
-   - Provedor Híbrido: O frontend deve conter uma camada de serviço que pode se comunicar com a API REST real do Spring Boot e também fornecer fallback mock completo em memória para demonstração instantânea via `npm run dev`.
+3. INFRAESTRUTURA, SCRIPTS E DOCUMENTAÇÃO
+   - Compose deve subir caseflow-web, caseflow-bff, auth-service, case-service, auth-db e case-db.
+     Use DNS interno entre serviços; publique somente web e BFF. Persista bancos em volumes
+     separados e documentos em `./data/documents`.
+   - Segredos vêm do ambiente/`.env` local ignorado pelo Git. Nunca grave valores no repositório.
+   - Não adicione Maven, broker, Redis, OAuth Provider externo, S3, OCR ou dependência de teste
+     não aprovada em `.ai/tech-stack.md`.
+   - Atualize README e contratos existentes somente onde execução, porta, endpoint ou comportamento
+     mudou. Preserve a estrutura original dos Markdown e não substitua o conteúdo inteiro sem
+     necessidade.
+   - Teste os serviços com Gradle Wrapper, rode `npm test`/`npm run build` no frontend e execute
+     Compose/E2E conforme o gate autorizado. Não remova volumes para limpar dados de teste.
 
-3. INFRAESTRUTURA E SCRIPTS:
-   - docker-compose.yml para subir toda a stack opcionalmente em containers.
-   - README.md abrangente com instruções passo a passo para executar o backend e o frontend, além do roteiro de teste do MVP cobrindo todos os critérios de aceite.
-
-Entregue o código completo, compilável e executável localmente.
+Não introduza OAuth2/OIDC, sessão/cookie no BFF, contas persistidas, usuário padrão, `X-User-Email`,
+PDF de fallback, broker ou worker externo. Diferencie rejeição de negócio de falha técnica; não
+exponha stack trace, segredo, JWT ou conteúdo privado. Informe evidências e débitos sem afirmar
+que uma regra passou quando não foi testada.
 ```

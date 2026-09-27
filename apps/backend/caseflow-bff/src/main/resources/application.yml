@@ -1,0 +1,13 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: caseflow-bff
+
+caseflow:
+  jwt:
+    secret: ${CASEFLOW_JWT_SECRET}
+  downstream:
+    auth-service-url: ${AUTH_SERVICE_URL:http://localhost:8082}
+    case-service-url: ${CASE_SERVICE_URL:http://localhost:8080}

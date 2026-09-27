@@ -1,15 +1,8 @@
-# CaseFlow — Regras de Projeto para Agentes e Assistentes de IA
+# CaseFlow — Referências de Configuração para Cursor
 
-Sempre leia e respeite os arquivos de contexto contidos no diretório `.ai/` antes de propor ou realizar qualquer modificação no código:
+Configuração do projeto:
 
-1. `.ai/standards.md` — Convenções de nomenclatura, Clean Architecture, injeção de dependências e padrões para Kotlin (Spring Boot) e React (TypeScript).
-2. `.ai/architecture.md` — Decisões de arquitetura (ADRs), separação de camadas e fluxo de processamento assíncrono.
-3. `.ai/tech-stack.md` — Versões permitidas de frameworks, bibliotecas e bancos de dados. Não adicione bibliotecas externas fora desta especificação.
-4. `.ai/business-rules.md` — Regras de negócio determinísticas para conferência documental, ciclo de vida de status e matriz de permissões (USER vs ADMIN).
-
-## Regras Fundamentais
-- Backend em Kotlin idiomático com Spring Boot 3 (null-safety, data classes, immutability, constructor injection).
-- Frontend em React com TypeScript, componentes funcionais tipados e Tailwind CSS.
-- Não permita que Solicitantes acessem casos de outros usuários.
-- Garanta que operações críticas de envio e reprocessamento utilizem `Idempotency-Key`.
-- Toda resposta de erro de API deve seguir formato estruturado padronizado com `code` e `message`.
+- `.ai/architecture.md`
+- `.ai/business-rules.md`
+- `.ai/standards.md`
+- `.ai/tech-stack.md`

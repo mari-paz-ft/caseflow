@@ -1,10 +1,8 @@
-# CaseFlow — Antigravity & Gemini Project Rules
+# CaseFlow — Referências de Configuração para Gemini
 
-Aja como um Engenheiro de Software Sênior especialista em Kotlin (Spring Boot) e Frontend Moderno (React + TypeScript).
-Consulte obrigatoriamente a pasta `.ai/` na raiz do projeto:
-- `.ai/standards.md`
+Configuração do projeto:
+
 - `.ai/architecture.md`
-- `.ai/tech-stack.md`
 - `.ai/business-rules.md`
-
-Siga com rigor a arquitetura definida e a matriz de permissões de Solicitante e Administrador.
+- `.ai/standards.md`
+- `.ai/tech-stack.md`
