@@ -24,10 +24,12 @@ Este documento registra os prompts efetivamente utilizados para conduzir a audit
 | **T6** | Garantir unicidade do protocolo com tentativas limitadas | `4a2b6b0` | Implementado; testes adicionados, execução pendente por falta de Java |
 | **T7** | Remover `!!` de `AnalysisEngineService` | `24f9316` | Concluído |
 | **T8** | Delegar mapeamento de histórico e notificações aos serviços | `7548e80` | Concluído |
+| **T11** | Aplicar construções idiomáticas Kotlin (`HexFormat`, `in`) | `e24acf5` | Concluído |
+| **T12** | Remover build Maven duplicado e alinhar documentação | `826a1bd` | Concluído |
 | **T20** | Relatório de execução da trilha mínima | `d1d9c0d` | Concluído; métricas finais bloqueadas pela falta de JDK |
 | **T21** | Fechamento do arquivo de prompts com histórico completo | `c0f3cad` | Concluído |
 
-As tarefas T11–T19 da trilha completa ainda estão pendentes. T13 é opcional no plano.
+As tarefas T13–T19 da trilha completa ainda estão pendentes. T13 é opcional no plano.
 
 ---
 
@@ -105,5 +107,15 @@ As tarefas T11–T19 da trilha completa ainda estão pendentes. T13 é opcional 
 - **Commit:** `7548e80`
 - **Instrução executada:** Adicionar `toDto()` a `HistoryService` e `NotificationService` e fazer o Controller delegar o mapeamento, preservando os campos JSON.
 - **Problema & técnica:** Retirada da montagem repetida de DTOs do Controller, com contrato coberto pelos snapshots T3.
+
+### Tarefa T11 · Kotlin idiomático
+- **Commit:** `e24acf5`
+- **Instrução executada:** Substituir o `fold` manual do SHA-256 por `HexFormat` e a cadeia de condições de estado por membership em conjunto.
+- **Problema & técnica:** Uso de APIs padrão para conversão hexadecimal e checagem de pertencimento, mantendo o formato do hash e os estados aceitos.
+
+### Tarefa T12 · Build duplicado e documentação de arquitetura
+- **Commit:** `826a1bd`
+- **Instrução executada:** Confirmar que Docker e stack usam Gradle, remover o `backend/pom.xml` e corrigir divergências de nomes, códigos de erro e idempotência nos documentos `.ai/`.
+- **Problema & técnica:** Remoção de um segundo build não usado e sincronização da documentação com o código real.
 
 ---
