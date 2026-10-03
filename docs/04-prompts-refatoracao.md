@@ -22,10 +22,11 @@ Este documento registra os prompts efetivamente utilizados para conduzir a audit
 | **T10** | Remoção de código morto comprovado e parâmetro ignorado | `c35a8ff` | Concluído |
 | **T5** | Eliminar duplicação de criação do `ProcessingJob` | `8f28cd0` | Concluído |
 | **T6** | Garantir unicidade do protocolo com tentativas limitadas | `4a2b6b0` | Implementado; testes adicionados, execução pendente por falta de Java |
+| **T7** | Remover `!!` de `AnalysisEngineService` | `24f9316` | Concluído |
 | **T20** | Relatório de execução da trilha mínima | `d1d9c0d` | Concluído; métricas finais bloqueadas pela falta de JDK |
 | **T21** | Fechamento do arquivo de prompts com histórico completo | `c0f3cad` | Concluído |
 
-As tarefas T7–T8 e T11–T19 da trilha completa ainda estão pendentes. T13 é opcional no plano.
+As tarefas T8 e T11–T19 da trilha completa ainda estão pendentes. T13 é opcional no plano.
 
 ---
 
@@ -93,5 +94,10 @@ As tarefas T7–T8 e T11–T19 da trilha completa ainda estão pendentes. T13 é
 - **Commit:** `4a2b6b0`
 - **Instrução executada:** Verificar a unicidade de cada protocolo gerado, repetir no máximo cinco vezes mantendo `CF-AAAAMMDD-NNNN` e falhar com código explícito se todas colidirem.
 - **Problema & técnica:** Prevenção de colisão com a restrição única do banco usando consulta derivada `existsByProtocol` e retry limitado. Foram adicionados testes para colisão recuperável e esgotamento; a execução depende de JDK.
+
+### Tarefa T7 · Remover `!!`
+- **Commit:** `24f9316`
+- **Instrução executada:** Substituir os três force unwraps de datas em `executeAnalysis` por safe calls e comparação explícita com `true`, preservando os mesmos `reasonCodes`.
+- **Problema & técnica:** Remoção de caminhos que podiam lançar `NullPointerException` por desembrulho forçado de valores anuláveis.
 
 ---
