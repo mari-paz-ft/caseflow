@@ -129,12 +129,7 @@ class CaseService(
 
         val savedCase = caseRequestRepository.save(caseRequest)
 
-        val job = ProcessingJob(
-            caseRequest = savedCase,
-            runNumber = savedCase.processingRun,
-            state = JobState.SCHEDULED
-        )
-        val savedJob = processingJobRepository.save(job)
+        val savedJob = createProcessingJob(savedCase)
 
         historyService.record(
             caseRequest = savedCase,
@@ -168,12 +163,7 @@ class CaseService(
 
         val savedCase = caseRequestRepository.save(caseRequest)
 
-        val job = ProcessingJob(
-            caseRequest = savedCase,
-            runNumber = savedCase.processingRun,
-            state = JobState.SCHEDULED
-        )
-        val savedJob = processingJobRepository.save(job)
+        val savedJob = createProcessingJob(savedCase)
 
         historyService.record(
             caseRequest = savedCase,
@@ -192,6 +182,15 @@ class CaseService(
         val randomDigits = Random.nextInt(1000, 9999)
         return "CF-$dateStr-$randomDigits"
     }
+
+    private fun createProcessingJob(caseRequest: CaseRequest): ProcessingJob =
+        processingJobRepository.save(
+            ProcessingJob(
+                caseRequest = caseRequest,
+                runNumber = caseRequest.processingRun,
+                state = JobState.SCHEDULED
+            )
+        )
 
     fun toDto(caseRequest: CaseRequest): CaseResponseDto = caseMapper.toDto(caseRequest)
 }
