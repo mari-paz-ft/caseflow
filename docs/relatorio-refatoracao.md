@@ -2,7 +2,7 @@
 
 Plano para o grupo · atualizado em 03/10/2026
 
-## Relatório de execução da trilha mínima
+## Relatório de execução da trilha completa
 
 Branch de trabalho: `refactoring` · base: `9de3812`.
 
@@ -17,19 +17,33 @@ Branch de trabalho: `refactoring` · base: `9de3812`.
 | T4 | `f10598e` | Mapeamento extraído para `CaseMapper`. |
 | T9 | `9b03930`, `5285ecc` | `AuthService`, BCrypt no login e no seed, Controller desacoplado do repositório e testes de senha correta/incorreta. O filtro `X-User-Email` foi preservado. |
 | T10 | `c35a8ff` | Consultas de repositório sem chamadores removidas após busca no backend/frontend; parâmetro interno `idempotencyKey` removido, mantendo o cabeçalho HTTP. |
+| T5 | `8f28cd0` | Criação do `ProcessingJob` centralizada para submissão e retry. |
+| T6 | `4a2b6b0` | Verificação de protocolo único com até cinco tentativas; testes adicionados para colisão e esgotamento, ainda sem execução JVM. |
+| T7 | `24f9316` | Três force unwraps removidos de `AnalysisEngineService`, mantendo os códigos de motivo. |
+| T8 | `7548e80`, `da329fd` | Mapeamento de histórico/notificações delegado aos serviços e snapshots ajustados. |
+| T11 | `e24acf5` | SHA-256 convertido com `HexFormat`; seleção de estados usa conjunto. |
+| T12 | `826a1bd` | Build Maven duplicado removido e documentação `.ai/` alinhada ao código. |
+| T14 | `13233e3` | Contexto e filtro de autenticação e serviços de suporte separados em arquivos próprios. |
+| T15 | `1fa1190` | Vitest/jsdom e teste de fumaça de `StatusBadge`. |
+| T16 | `fce3a4a` | Dados mock, adaptador local, cliente HTTP e fallback separados; helper coberto por testes. |
+| T17 | `93a1dd9`, `4e75400` | `useCasesList`, funções puras e notificações tipadas, sem `any` em `App.tsx`. |
+| T18 | `e2b2c32` | Estado, mutations e polling de `CaseDetail` extraídos para hook testado. |
+| T19 | `198cc77` | Upload, retry modal e timeline extraídos como subcomponentes. |
 
 ### Verificação e métricas
 
 O baseline de T1 registra 44 violações: 1 `ComplexMethod` (McCabe 20), 3 `UnsafeCallOnNullableType`, 1 `TooManyFunctions`, 6 `MatchingDeclarationName`, 19 `WildcardImport` e 14 `MagicNumber`.
 
-Não foi possível executar `./gradlew test` nem `./gradlew detekt` após as mudanças: o ambiente não possui Java Runtime (`Unable to locate a Java Runtime`). Portanto, não há contagem pós-refatoração confiável e nenhuma redução foi presumida. `git diff --check` passou antes dos commits; isso verifica whitespace, não substitui compilação ou testes. O comparativo Detekt permanece pendente de execução em ambiente com JDK compatível.
+O baseline de T1 continua registrando 44 violações (1 `ComplexMethod`, 3 `UnsafeCallOnNullableType`, 1 `TooManyFunctions`, 6 `MatchingDeclarationName`, 19 `WildcardImport` e 14 `MagicNumber`). Não foi possível executar `./gradlew test` nem `./gradlew detekt` após as mudanças: o ambiente não possui Java Runtime (`Unable to locate a Java Runtime`). Portanto, não há contagem pós-refatoração confiável e nenhuma redução foi presumida. `git diff --check` passou nas alterações; isso verifica whitespace, não substitui compilação ou testes.
+
+No frontend, `npm test` passou com 9 testes em 4 arquivos e `npm run build` passou após T19. Os testes incluem fallback HTTP, funções puras de listagem, carregamento/polling do hook de detalhe e o teste de fumaça do badge.
 
 ### Escopo preservado e próximos passos
 
 - O cabeçalho `X-User-Email` permanece no `HeaderAuthFilter` para manter compatibilidade com o frontend atual.
 - `/csrf`, `/logout` e a assinatura HTTP de `Idempotency-Key` foram mantidos; apenas o argumento ignorado deixou de ser passado internamente.
-- T5–T8 e T11–T19 pertencem à trilha completa e não foram executadas. T13 é opcional conforme o plano.
-- Antes da entrega, executar `./gradlew test` e `./gradlew detekt` em um ambiente com Java e registrar os números finais. O build do frontend também deve ser executado conforme o checklist do plano.
+- T13 foi diferida por ser opcional e envolver atualização de dependências sem possibilidade de validar o backend neste ambiente.
+- Antes da entrega, executar `./gradlew test` e `./gradlew detekt` em um ambiente com JDK compatível e registrar os números finais. Reexecutar também `npm test` e `npm run build` após qualquer alteração adicional.
 
 ## Como ler este documento
 
