@@ -2,7 +2,9 @@ package com.caseflow.controller
 
 import com.caseflow.config.CurrentUserContext
 import com.caseflow.controller.dto.CaseResponseDto
+import com.caseflow.controller.dto.CaseHistoryDto
 import com.caseflow.controller.dto.LoginRequestDto
+import com.caseflow.controller.dto.NotificationDto
 import com.caseflow.domain.enums.CaseStatus
 import com.caseflow.domain.enums.RoleName
 import com.caseflow.domain.model.AppUser
@@ -123,6 +125,16 @@ class CaseContractSnapshotTest {
         )
 
         `when`(historyService.getHistoryForCase(caseId)).thenReturn(listOf(historyItem))
+        `when`(historyService.toDto(historyItem)).thenReturn(
+            CaseHistoryDto(
+                id = historyId,
+                caseId = caseId,
+                eventType = "CRIACAO_RASCUNHO",
+                actorSubject = solicitanteUser.email,
+                details = "Rascunho criado no portal",
+                occurredAt = fixedDateTime
+            )
+        )
 
         mockMvc.perform(get("/bff/v1/cases/$caseId/history"))
             .andExpect(status().isOk)
@@ -162,6 +174,16 @@ class CaseContractSnapshotTest {
         )
 
         `when`(notificationService.getNotificationsForUser(userSubject)).thenReturn(listOf(notification))
+        `when`(notificationService.toDto(notification)).thenReturn(
+            NotificationDto(
+                id = notifId,
+                caseId = caseId,
+                title = "Solicitação Aprovada",
+                message = "Sua documentação foi aprovada com sucesso.",
+                readAt = null,
+                createdAt = fixedDateTime
+            )
+        )
 
         mockMvc.perform(get("/bff/v1/notifications"))
             .andExpect(status().isOk)
