@@ -10,7 +10,7 @@
 ## 2. Backend — Kotlin & Spring Boot
 
 ### Convenções de Nomenclatura
-- **Classes e Interfaces:** `PascalCase` (ex: `CaseRequestService`, `ProcessingJobRepository`).
+- **Classes e Interfaces:** `PascalCase` (ex: `CaseService`, `ProcessingJobRepository`).
 - **Métodos e Variáveis:** `camelCase` (ex: `submitCase`, `rulesVersion`).
 - **Enums e Constantes:** `UPPER_SNAKE_CASE` (ex: `CaseStatus.RASCUNHO`, `MAX_ATTACHMENTS = 3`).
 - **DTOs / Payloads:** Records ou Kotlin `data class` com validações via Jakarta Bean Validation (`@NotBlank`, `@Size`, etc.).
@@ -21,8 +21,8 @@
 - **Imutabilidade:** Preferir `val` a `var` e coleções imutáveis (`List`, `Set`, `Map`).
 - **Tratamento de Exceções:** 
   - Exceções de negócio devem estender uma classe base de domínio (ex: `CaseFlowException`, `ResourceNotFoundException`, `ConflictException`).
-  - Todas as exceções devem ser interceptadas e tratadas por `@RestControllerAdvice` (`GlobalExceptionHandler`), retornando payload padronizado RFC 7807 (`ProblemDetail`) ou `ApiError` com `code`, `message`, `timestamp` e `traceId`.
-- **Idempotência:** Rotas de mutação crítica (`/submit`, `/retry`) exigem cabeçalho `Idempotency-Key` e tratam repetições de forma consistente.
+  - Exceções de domínio são tratadas por `@RestControllerAdvice` (`GlobalExceptionHandler`), que retorna `ApiErrorResponse` com `errorCode`, `message`, `timestamp` e `traceId`.
+- **Idempotência:** O backend mantém o cabeçalho opcional `Idempotency-Key` por compatibilidade; atualmente não persiste nem valida a chave. O reenvio de `/submit` é idempotente para estados já enviados ou terminais, enquanto `/retry` depende do estado atual.
 - **DTO Mapping:** Métodos de extensão ou construtores de conversão (`toDto()`, `toEntity()`) explícitos.
 
 ---
