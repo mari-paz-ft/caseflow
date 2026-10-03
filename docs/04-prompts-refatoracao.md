@@ -26,10 +26,11 @@ Este documento registra os prompts efetivamente utilizados para conduzir a audit
 | **T8** | Delegar mapeamento de histórico e notificações aos serviços | `7548e80` | Concluído |
 | **T11** | Aplicar construções idiomáticas Kotlin (`HexFormat`, `in`) | `e24acf5` | Concluído |
 | **T12** | Remover build Maven duplicado e alinhar documentação | `826a1bd` | Concluído |
+| **T14** | Separar tipos de segurança e serviços de suporte | `13233e3` | Concluído |
 | **T20** | Relatório de execução da trilha mínima | `d1d9c0d` | Concluído; métricas finais bloqueadas pela falta de JDK |
 | **T21** | Fechamento do arquivo de prompts com histórico completo | `c0f3cad` | Concluído |
 
-As tarefas T13–T19 da trilha completa ainda estão pendentes. T13 é opcional no plano.
+As tarefas T13 e T15–T19 da trilha completa ainda estão pendentes. T13 é opcional e foi diferida para evitar atualização de dependências sem validação backend disponível.
 
 ---
 
@@ -117,5 +118,10 @@ As tarefas T13–T19 da trilha completa ainda estão pendentes. T13 é opcional 
 - **Commit:** `826a1bd`
 - **Instrução executada:** Confirmar que Docker e stack usam Gradle, remover o `backend/pom.xml` e corrigir divergências de nomes, códigos de erro e idempotência nos documentos `.ai/`.
 - **Problema & técnica:** Remoção de um segundo build não usado e sincronização da documentação com o código real.
+
+### Tarefa T14 · Um tipo por arquivo
+- **Commit:** `13233e3`
+- **Instrução executada:** Separar `CurrentUserContext`, `HeaderAuthFilter`, `HistoryService` e `NotificationService` em arquivos dedicados sem alterar suas responsabilidades.
+- **Problema & técnica:** Redução de declarações de nível superior agrupadas e melhor localização dos tipos por nome de arquivo.
 
 ---
