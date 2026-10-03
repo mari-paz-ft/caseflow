@@ -23,10 +23,11 @@ Este documento registra os prompts efetivamente utilizados para conduzir a audit
 | **T5** | Eliminar duplicação de criação do `ProcessingJob` | `8f28cd0` | Concluído |
 | **T6** | Garantir unicidade do protocolo com tentativas limitadas | `4a2b6b0` | Implementado; testes adicionados, execução pendente por falta de Java |
 | **T7** | Remover `!!` de `AnalysisEngineService` | `24f9316` | Concluído |
+| **T8** | Delegar mapeamento de histórico e notificações aos serviços | `7548e80` | Concluído |
 | **T20** | Relatório de execução da trilha mínima | `d1d9c0d` | Concluído; métricas finais bloqueadas pela falta de JDK |
 | **T21** | Fechamento do arquivo de prompts com histórico completo | `c0f3cad` | Concluído |
 
-As tarefas T8 e T11–T19 da trilha completa ainda estão pendentes. T13 é opcional no plano.
+As tarefas T11–T19 da trilha completa ainda estão pendentes. T13 é opcional no plano.
 
 ---
 
@@ -99,5 +100,10 @@ As tarefas T8 e T11–T19 da trilha completa ainda estão pendentes. T13 é opci
 - **Commit:** `24f9316`
 - **Instrução executada:** Substituir os três force unwraps de datas em `executeAnalysis` por safe calls e comparação explícita com `true`, preservando os mesmos `reasonCodes`.
 - **Problema & técnica:** Remoção de caminhos que podiam lançar `NullPointerException` por desembrulho forçado de valores anuláveis.
+
+### Tarefa T8 · Mapeamento DTO dos serviços de suporte
+- **Commit:** `7548e80`
+- **Instrução executada:** Adicionar `toDto()` a `HistoryService` e `NotificationService` e fazer o Controller delegar o mapeamento, preservando os campos JSON.
+- **Problema & técnica:** Retirada da montagem repetida de DTOs do Controller, com contrato coberto pelos snapshots T3.
 
 ---
