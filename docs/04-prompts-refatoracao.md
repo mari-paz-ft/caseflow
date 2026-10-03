@@ -20,10 +20,11 @@ Este documento registra os prompts efetivamente utilizados para conduzir a audit
 | **T4** | Extração do `CaseMapper` (`@Component`) | `f10598e` | Concluído |
 | **T9** | Extração de `AuthService` com BCrypt e desacoplamento do Controller | `9b03930`, `5285ecc` | Concluído |
 | **T10** | Remoção de código morto comprovado e parâmetro ignorado | `c35a8ff` | Concluído |
+| **T5** | Eliminar duplicação de criação do `ProcessingJob` | `8f28cd0` | Concluído |
 | **T20** | Relatório de execução da trilha mínima | `d1d9c0d` | Concluído; métricas finais bloqueadas pela falta de JDK |
 | **T21** | Fechamento do arquivo de prompts com histórico completo | `c0f3cad` | Concluído |
 
-As tarefas T5–T8 e T11–T19 pertencem à trilha completa e não foram executadas nesta rodada. T13 é opcional no plano.
+As tarefas T6–T8 e T11–T19 da trilha completa ainda estão pendentes. T13 é opcional no plano.
 
 ---
 
@@ -81,5 +82,10 @@ As tarefas T5–T8 e T11–T19 pertencem à trilha completa e não foram executa
 - **Commit:** `c0f3cad` (a atualização deste índice com o hash ocorre no commit de fechamento seguinte; um commit não pode conter o próprio hash).
 - **Instrução executada:** Sincronizar os estados e hashes efetivos de T0–T20, documentando as etapas não executadas da trilha completa.
 - **Problema & técnica:** Fechamento do audit trail sem atribuir hashes fictícios nem declarar métricas não medidas.
+
+### Tarefa T5 · Eliminar duplicação de `ProcessingJob`
+- **Commit:** `8f28cd0`
+- **Instrução executada:** Extrair a criação do `ProcessingJob` duplicada entre `submitCase` e `retryCase` para `createProcessingJob(caseRequest)`, preservando a ordem e o objeto persistido.
+- **Problema & técnica:** Centralização da construção e persistência do job em método privado reutilizado pelos dois fluxos.
 
 ---
