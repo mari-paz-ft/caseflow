@@ -9,7 +9,7 @@ import com.caseflow.domain.exception.ForbiddenException
 import com.caseflow.domain.exception.ResourceNotFoundException
 import com.caseflow.domain.model.AppUser
 import com.caseflow.domain.model.CaseDocument
-import com.caseflow.domain.model.RoleName
+import com.caseflow.domain.enums.RoleName
 import com.caseflow.repository.CaseDocumentRepository
 import com.caseflow.repository.CaseRequestRepository
 import org.springframework.beans.factory.annotation.Value

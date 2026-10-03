@@ -75,3 +75,12 @@ tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
         sarif.required.set(false)
     }
 }
+
+// detekt 1.23.6 é compilado com Kotlin 1.9.23; evita que o plugin Kotlin 2.x substitua a versão
+configurations.matching { it.name == "detekt" }.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "org.jetbrains.kotlin") {
+            useVersion("1.9.23")
+        }
+    }
+}
