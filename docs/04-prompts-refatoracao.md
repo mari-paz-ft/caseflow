@@ -33,7 +33,7 @@ Este documento registra os prompts efetivamente utilizados para conduzir a audit
 | **T18** | Extrair hook `useCaseDetail` | `e2b2c32` | Concluído; 9 testes e build passaram |
 | **T19** | Extrair subcomponentes de `CaseDetail` | `198cc77` | Concluído; 9 testes e build passaram |
 | **T20** | Relatório final da trilha completa | `d1d9c0d`, `fb0315c`, `066e1bf` | Relatório atualizado; métricas finais bloqueadas pela falta de JDK |
-| **T21** | Fechamento do arquivo de prompts com histórico completo | `c0f3cad`, *(hash de atualização abaixo)* | Concluído; hash final registrado no commit seguinte |
+| **T21** | Fechamento do arquivo de prompts com histórico completo | `c0f3cad`, `f5d96b2` | Concluído |
 
 T13 é a única tarefa planejada ainda não executada; é opcional e foi diferida para evitar atualização de dependências sem validação backend disponível.
 
@@ -90,7 +90,7 @@ T13 é a única tarefa planejada ainda não executada; é opcional e foi diferid
 - **Problema & técnica:** Rastreabilidade entre implementação e entregável. O frontend foi validado (9 testes e build); o Detekt final e a suíte backend seguem pendentes porque o ambiente não tem Java Runtime.
 
 ### Tarefa T21 · Fechamento do registro de prompts
-- **Commits:** `c0f3cad` e os commits de fechamento deste índice.
+- **Commits:** `c0f3cad`, `f5d96b2` (o hash desta atualização será registrado no commit de fechamento subsequente, pois um commit não pode incluir o próprio hash).
 - **Instrução executada:** Sincronizar os estados e hashes efetivos de T0–T20, documentando T13 como opcional diferida e as métricas backend ainda não medidas.
 - **Problema & técnica:** Fechamento do audit trail sem atribuir hashes fictícios nem declarar métricas não medidas. O hash do último commit será registrado em commit subsequente, pois um commit não pode conter o próprio hash.
 
