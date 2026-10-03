@@ -6,6 +6,7 @@ plugins {
     kotlin("jvm") version "2.0.20"
     kotlin("plugin.spring") version "2.0.20"
     kotlin("plugin.jpa") version "2.0.20"
+    id("io.gitlab.arturbosch.detekt") version "1.23.6"
 }
 
 group = "com.caseflow"
@@ -57,4 +58,20 @@ tasks.withType<KotlinCompile> {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    allRules = false
+    source.setFrom("src/main/kotlin", "src/test/kotlin")
+}
+
+tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+    reports {
+        html.required.set(true)
+        md.required.set(true)
+        xml.required.set(false)
+        txt.required.set(false)
+        sarif.required.set(false)
+    }
 }
