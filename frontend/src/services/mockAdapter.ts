@@ -7,9 +7,10 @@ class StorageService {
   private notifications: NotificationItem[];
 
   constructor() {
-    const storedCases = localStorage.getItem('caseflow_cases');
-    const storedHistories = localStorage.getItem('caseflow_histories');
-    const storedNotifs = localStorage.getItem('caseflow_notifs');
+    const storage = typeof localStorage === 'undefined' ? null : localStorage;
+    const storedCases = storage?.getItem('caseflow_cases');
+    const storedHistories = storage?.getItem('caseflow_histories');
+    const storedNotifs = storage?.getItem('caseflow_notifs');
 
     this.cases = storedCases ? JSON.parse(storedCases) : INITIAL_CASES;
     this.histories = storedHistories ? JSON.parse(storedHistories) : INITIAL_HISTORIES;
@@ -17,6 +18,7 @@ class StorageService {
   }
 
   save() {
+    if (typeof localStorage === 'undefined') return;
     localStorage.setItem('caseflow_cases', JSON.stringify(this.cases));
     localStorage.setItem('caseflow_histories', JSON.stringify(this.histories));
     localStorage.setItem('caseflow_notifs', JSON.stringify(this.notifications));
