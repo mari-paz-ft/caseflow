@@ -73,7 +73,7 @@ class AnalysisEngineService(
         }
         if (docIdentificacao == null) {
             reasonCodes.add("FALTA_IDENTIFICACAO")
-        } else if (docIdentificacao.validUntil != null && docIdentificacao.validUntil!!.isBefore(referenceDate)) {
+        } else if (docIdentificacao.validUntil?.isBefore(referenceDate) == true) {
             reasonCodes.add("DOCUMENTO_VENCIDO_IDENTIFICACAO")
         }
 
@@ -83,7 +83,7 @@ class AnalysisEngineService(
         }
         if (docEndereco == null) {
             reasonCodes.add("FALTA_COMPROVANTE_ENDERECO")
-        } else if (docEndereco.validUntil != null && docEndereco.validUntil!!.isBefore(referenceDate)) {
+        } else if (docEndereco.validUntil?.isBefore(referenceDate) == true) {
             reasonCodes.add("DOCUMENTO_VENCIDO_COMPROVANTE_ENDERECO")
         }
 
@@ -91,7 +91,7 @@ class AnalysisEngineService(
         val docComplementar = caseRequest.documents.find { 
             it.category == DocumentCategory.COMPLEMENTAR && it.uploadState == UploadState.READY 
         }
-        if (docComplementar?.validUntil != null && docComplementar.validUntil!!.isBefore(referenceDate)) {
+        if (docComplementar?.validUntil?.isBefore(referenceDate) == true) {
             reasonCodes.add("DOCUMENTO_VENCIDO_COMPLEMENTAR")
         }
 
