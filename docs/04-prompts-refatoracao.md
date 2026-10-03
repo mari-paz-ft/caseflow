@@ -32,7 +32,7 @@ Este documento registra os prompts efetivamente utilizados para conduzir a audit
 | **T17** | Extrair hook `useCasesList` e tipar notificações | `93a1dd9`, `4e75400` | Concluído; 7 testes e build passaram |
 | **T18** | Extrair hook `useCaseDetail` | `e2b2c32` | Concluído; 9 testes e build passaram |
 | **T19** | Extrair subcomponentes de `CaseDetail` | `198cc77` | Concluído; 9 testes e build passaram |
-| **T20** | Relatório de execução da trilha mínima | `d1d9c0d` | Concluído; métricas finais bloqueadas pela falta de JDK |
+| **T20** | Relatório final da trilha completa | `d1d9c0d`, `fb0315c` | Relatório atualizado; métricas finais bloqueadas pela falta de JDK |
 | **T21** | Fechamento do arquivo de prompts com histórico completo | `c0f3cad` | Concluído |
 
 T13 é a única tarefa planejada ainda não executada; é opcional e foi diferida para evitar atualização de dependências sem validação backend disponível.
@@ -85,14 +85,14 @@ T13 é a única tarefa planejada ainda não executada; é opcional e foi diferid
 - **Problema & técnica:** Redução de API interna não utilizada com verificação estática de referências.
 
 ### Tarefa T20 · Relatório final da trilha mínima
-- **Commit:** `d1d9c0d`
-- **Instrução executada:** Consolidar diagnóstico, hashes de commits, escopo preservado e estado das verificações no relatório de modernização.
-- **Problema & técnica:** Rastreabilidade entre implementação e entregável. A medição pós-refatoração do Detekt e os testes ficaram registrados como pendentes porque o ambiente não possui Java Runtime.
+- **Commits:** `d1d9c0d`, `fb0315c`
+- **Instrução executada:** Consolidar diagnóstico, hashes de commits, escopo preservado e estado das verificações da trilha completa no relatório de modernização.
+- **Problema & técnica:** Rastreabilidade entre implementação e entregável. O frontend foi validado (9 testes e build); o Detekt final e a suíte backend seguem pendentes porque o ambiente não tem Java Runtime.
 
 ### Tarefa T21 · Fechamento do registro de prompts
-- **Commit:** `c0f3cad` (a atualização deste índice com o hash ocorre no commit de fechamento seguinte; um commit não pode conter o próprio hash).
-- **Instrução executada:** Sincronizar os estados e hashes efetivos de T0–T20, documentando as etapas não executadas da trilha completa.
-- **Problema & técnica:** Fechamento do audit trail sem atribuir hashes fictícios nem declarar métricas não medidas.
+- **Commits:** `c0f3cad` e o commit de fechamento final deste índice.
+- **Instrução executada:** Sincronizar os estados e hashes efetivos de T0–T20, documentando T13 como opcional diferida e as métricas backend ainda não medidas.
+- **Problema & técnica:** Fechamento do audit trail sem atribuir hashes fictícios nem declarar métricas não medidas. O hash do último commit será registrado em commit subsequente, pois um commit não pode conter o próprio hash.
 
 ### Tarefa T5 · Eliminar duplicação de `ProcessingJob`
 - **Commit:** `8f28cd0`
