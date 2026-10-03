@@ -9,7 +9,7 @@ import com.caseflow.domain.model.AppUser
 import com.caseflow.domain.model.CaseHistory
 import com.caseflow.domain.model.CaseRequest
 import com.caseflow.domain.model.Notification
-import com.caseflow.repository.AppUserRepository
+import com.caseflow.service.AuthService
 import com.caseflow.service.CaseService
 import com.caseflow.service.DocumentService
 import com.caseflow.service.HistoryService
@@ -29,7 +29,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import java.time.LocalDateTime
-import java.util.Optional
 import java.util.UUID
 
 @DisplayName("Testes de Snapshot de Contrato HTTP — CaseController")
@@ -40,7 +39,7 @@ class CaseContractSnapshotTest {
     private lateinit var documentService: DocumentService
     private lateinit var historyService: HistoryService
     private lateinit var notificationService: NotificationService
-    private lateinit var appUserRepository: AppUserRepository
+    private lateinit var authService: AuthService
     private val objectMapper = ObjectMapper()
 
     private val userSubject = UUID.fromString("11111111-1111-1111-1111-111111111111")
@@ -58,17 +57,15 @@ class CaseContractSnapshotTest {
         documentService = mock(DocumentService::class.java)
         historyService = mock(HistoryService::class.java)
         notificationService = mock(NotificationService::class.java)
-        appUserRepository = mock(AppUserRepository::class.java)
-
-        `when`(appUserRepository.findByEmail("solicitante@caseflow.local"))
-            .thenReturn(Optional.of(solicitanteUser))
+        authService = mock(AuthService::class.java)
+        `when`(authService.getCurrentUser()).thenReturn(solicitanteUser)
 
         val controller = CaseController(
             caseService,
             documentService,
             historyService,
             notificationService,
-            appUserRepository
+            authService
         )
 
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build()
@@ -183,6 +180,16 @@ class CaseContractSnapshotTest {
             email = "solicitante@caseflow.local",
             password = "senha123"
         )
+        val loginResponse = com.caseflow.controller.dto.LoginResponseDto(
+            "mock-token-solicitante@caseflow.local",
+            com.caseflow.controller.dto.UserDto(
+                userSubject,
+                solicitanteUser.email,
+                solicitanteUser.fullName,
+                solicitanteUser.role
+            )
+        )
+        `when`(authService.login(loginPayload)).thenReturn(loginResponse)
 
         mockMvc.perform(
             post("/bff/v1/auth/login")
