@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { CaseRequest, CaseHistory, User, DocumentCategory } from '../types';
+import React from 'react';
+import { DocumentCategory, User } from '../types';
 import { StatusBadge } from './StatusBadge';
-import { ApiService } from '../services/api';
+import { useCaseDetail } from '../hooks/useCaseDetail';
 import {
   ArrowLeft,
   UploadCloud,
@@ -33,49 +33,35 @@ export const CaseDetail: React.FC<Props> = ({
   onBack,
   onRefreshList
 }) => {
-  const [caseData, setCaseData] = useState<CaseRequest | null>(null);
-  const [histories, setHistories] = useState<CaseHistory[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Upload form state
-  const [uploadCategory, setUploadCategory] = useState<DocumentCategory>('IDENTIFICACAO');
-  const [validUntil, setValidUntil] = useState<string>('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-
-  // Retry modal state
-  const [isRetryModalOpen, setIsRetryModalOpen] = useState(false);
-  const [retryJustification, setRetryJustification] = useState('');
-  const [isRetrying, setIsRetrying] = useState(false);
-
-  // Submit state
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const loadCase = async () => {
-    try {
-      const data = await ApiService.getCaseById(caseId, currentUser);
-      setCaseData(data);
-      if (data) {
-        const h = await ApiService.getHistory(data.id, currentUser);
-        setHistories(h);
-      }
-    } catch (err) {
-      console.error('Erro ao carregar detalhes:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadCase();
-    // Polling simulation if processing
-    const interval = setInterval(() => {
-      if (caseData?.status === 'PROCESSANDO') {
-        loadCase();
-      }
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [caseId, currentUser, caseData?.status]);
+  const {
+    caseData,
+    histories,
+    loading,
+    uploadCategory,
+    setUploadCategory,
+    validUntil,
+    setValidUntil,
+    selectedFile,
+    setSelectedFile,
+    isUploading,
+    isRetryModalOpen,
+    setIsRetryModalOpen,
+    retryJustification,
+    setRetryJustification,
+    isRetrying,
+    isSubmitting,
+    isOwner,
+    isAdmin,
+    isDraft,
+    isTechnicalFailure,
+    hasIdDoc,
+    hasAddressDoc,
+    loadCase,
+    handleUpload,
+    handleDeleteDocument,
+    handleSubmitCase,
+    handleRetrySubmit,
+  } = useCaseDetail(caseId, currentUser, onRefreshList);
 
   if (loading || !caseData) {
     return (
@@ -87,95 +73,6 @@ export const CaseDetail: React.FC<Props> = ({
       </div>
     );
   }
-
-  const isOwner = caseData.ownerSubject === currentUser.id;
-  const isAdmin = currentUser.role === 'ROLE_ADMIN';
-  const isDraft = caseData.status === 'RASCUNHO';
-  const isTechnicalFailure = caseData.status === 'FALHA_TECNICA';
-
-  // Checklist
-  const hasIdDoc = caseData.documents.some(d => d.category === 'IDENTIFICACAO');
-  const hasAddressDoc = caseData.documents.some(d => d.category === 'COMPROVANTE_ENDERECO');
-
-  const handleUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedFile) return;
-
-    try {
-      setIsUploading(true);
-      await ApiService.uploadDocument(
-        caseData.id,
-        uploadCategory,
-        validUntil || null,
-        selectedFile,
-        currentUser
-      );
-      setSelectedFile(null);
-      setValidUntil('');
-      await loadCase();
-      onRefreshList();
-    } catch (err: any) {
-      alert(err.message || 'Falha no upload do documento');
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleDeleteDocument = async (docId: string) => {
-    if (!confirm('Deseja realmente remover este documento?')) return;
-    try {
-      await ApiService.deleteDocument(caseData.id, docId, currentUser);
-      await loadCase();
-      onRefreshList();
-    } catch (err: any) {
-      alert(err.message || 'Erro ao remover anexo');
-    }
-  };
-
-  const handleSubmitCase = async () => {
-    if (caseData.documents.length === 0) {
-      alert('Envio bloqueado: adicione pelo menos um documento.');
-      return;
-    }
-
-    if (!hasIdDoc || !hasAddressDoc) {
-      const confirmMsg =
-        'Atenção: sua solicitação ainda não possui todos os documentos obrigatórios (Identificação e Comprovante de Residência). Deseja enviar mesmo assim? (A análise automática resultará em rejeição).';
-      if (!confirm(confirmMsg)) return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      await ApiService.submitCase(caseData.id, caseData.version, currentUser);
-      await loadCase();
-      onRefreshList();
-    } catch (err: any) {
-      alert(err.message || 'Erro ao enviar solicitação');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleRetrySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (retryJustification.trim().length < 10 || retryJustification.trim().length > 500) {
-      alert('A justificativa deve ter entre 10 e 500 caracteres.');
-      return;
-    }
-
-    try {
-      setIsRetrying(true);
-      await ApiService.retryCase(caseData.id, retryJustification.trim(), currentUser);
-      setIsRetryModalOpen(false);
-      setRetryJustification('');
-      await loadCase();
-      onRefreshList();
-    } catch (err: any) {
-      alert(err.message || 'Erro ao reprocessar');
-    } finally {
-      setIsRetrying(false);
-    }
-  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-150">
