@@ -30,10 +30,11 @@ Este documento registra os prompts efetivamente utilizados para conduzir a audit
 | **T15** | Configurar Vitest e teste de fumaça do `StatusBadge` | `1fa1190` | Concluído; teste e build passaram |
 | **T16** | Modularizar cliente de API e fallback local | `fce3a4a` | Concluído; 4 testes e build passaram |
 | **T17** | Extrair hook `useCasesList` e tipar notificações | `93a1dd9`, `4e75400` | Concluído; 7 testes e build passaram |
+| **T18** | Extrair hook `useCaseDetail` | `e2b2c32` | Concluído; 9 testes e build passaram |
 | **T20** | Relatório de execução da trilha mínima | `d1d9c0d` | Concluído; métricas finais bloqueadas pela falta de JDK |
 | **T21** | Fechamento do arquivo de prompts com histórico completo | `c0f3cad` | Concluído |
 
-As tarefas T13 e T18–T19 da trilha completa ainda estão pendentes. T13 é opcional e foi diferida para evitar atualização de dependências sem validação backend disponível.
+As tarefas T13 e T19 da trilha completa ainda estão pendentes. T13 é opcional e foi diferida para evitar atualização de dependências sem validação backend disponível.
 
 ---
 
@@ -141,5 +142,10 @@ As tarefas T13 e T18–T19 da trilha completa ainda estão pendentes. T13 é opc
 - **Commits:** `93a1dd9`, `4e75400`
 - **Instrução executada:** Extrair o hook `useCasesList(currentUser)`, as funções puras `filterCases` e `computeStats`, tipar `NotificationItem[]` e substituir o cast `any` por parsing do filtro de status.
 - **Problema & técnica:** Separação de carregamento, filtros e estatísticas da tela; testes unitários cobrem filtro, métricas e parsing. `npm test` passou (7 testes) e `npm run build` passou. O adaptador mock agora também tolera ambientes sem `localStorage`.
+
+### Tarefa T18 · Hook `useCaseDetail`
+- **Commit:** `e2b2c32`
+- **Instrução executada:** Extrair estado, fetch, polling e mutations de documentos, submissão e retry para `useCaseDetail`, mantendo o intervalo de polling de 2 segundos.
+- **Problema & técnica:** Separação da lógica de estado e efeitos do JSX. Testes cobrem carregamento e polling; `npm test` passou (9 testes) e `npm run build` passou.
 
 ---
