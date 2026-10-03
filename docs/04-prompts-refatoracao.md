@@ -23,7 +23,7 @@ Este documento registra os prompts efetivamente utilizados para conduzir a audit
 | **T5** | Eliminar duplicação de criação do `ProcessingJob` | `8f28cd0` | Concluído |
 | **T6** | Garantir unicidade do protocolo com tentativas limitadas | `4a2b6b0` | Implementado; testes adicionados, execução pendente por falta de Java |
 | **T7** | Remover `!!` de `AnalysisEngineService` | `24f9316` | Concluído |
-| **T8** | Delegar mapeamento de histórico e notificações aos serviços | `7548e80` | Concluído |
+| **T8** | Delegar mapeamento de histórico e notificações aos serviços | `7548e80`, `da329fd` | Concluído; snapshots ajustados |
 | **T11** | Aplicar construções idiomáticas Kotlin (`HexFormat`, `in`) | `e24acf5` | Concluído |
 | **T12** | Remover build Maven duplicado e alinhar documentação | `826a1bd` | Concluído |
 | **T14** | Separar tipos de segurança e serviços de suporte | `13233e3` | Concluído |
@@ -31,10 +31,11 @@ Este documento registra os prompts efetivamente utilizados para conduzir a audit
 | **T16** | Modularizar cliente de API e fallback local | `fce3a4a` | Concluído; 4 testes e build passaram |
 | **T17** | Extrair hook `useCasesList` e tipar notificações | `93a1dd9`, `4e75400` | Concluído; 7 testes e build passaram |
 | **T18** | Extrair hook `useCaseDetail` | `e2b2c32` | Concluído; 9 testes e build passaram |
+| **T19** | Extrair subcomponentes de `CaseDetail` | `198cc77` | Concluído; 9 testes e build passaram |
 | **T20** | Relatório de execução da trilha mínima | `d1d9c0d` | Concluído; métricas finais bloqueadas pela falta de JDK |
 | **T21** | Fechamento do arquivo de prompts com histórico completo | `c0f3cad` | Concluído |
 
-As tarefas T13 e T19 da trilha completa ainda estão pendentes. T13 é opcional e foi diferida para evitar atualização de dependências sem validação backend disponível.
+T13 é a única tarefa planejada ainda não executada; é opcional e foi diferida para evitar atualização de dependências sem validação backend disponível.
 
 ---
 
@@ -109,9 +110,9 @@ As tarefas T13 e T19 da trilha completa ainda estão pendentes. T13 é opcional 
 - **Problema & técnica:** Remoção de caminhos que podiam lançar `NullPointerException` por desembrulho forçado de valores anuláveis.
 
 ### Tarefa T8 · Mapeamento DTO dos serviços de suporte
-- **Commit:** `7548e80`
+- **Commits:** `7548e80`, `da329fd`
 - **Instrução executada:** Adicionar `toDto()` a `HistoryService` e `NotificationService` e fazer o Controller delegar o mapeamento, preservando os campos JSON.
-- **Problema & técnica:** Retirada da montagem repetida de DTOs do Controller, com contrato coberto pelos snapshots T3.
+- **Problema & técnica:** Retirada da montagem repetida de DTOs do Controller, com contrato coberto pelos snapshots T3 e stubs ajustados para delegação.
 
 ### Tarefa T11 · Kotlin idiomático
 - **Commit:** `e24acf5`
@@ -147,5 +148,10 @@ As tarefas T13 e T19 da trilha completa ainda estão pendentes. T13 é opcional 
 - **Commit:** `e2b2c32`
 - **Instrução executada:** Extrair estado, fetch, polling e mutations de documentos, submissão e retry para `useCaseDetail`, mantendo o intervalo de polling de 2 segundos.
 - **Problema & técnica:** Separação da lógica de estado e efeitos do JSX. Testes cobrem carregamento e polling; `npm test` passou (9 testes) e `npm run build` passou.
+
+### Tarefa T19 · Subcomponentes de `CaseDetail`
+- **Commit:** `198cc77`
+- **Instrução executada:** Extrair `DocumentUploadForm`, `RetryModal` e `CaseHistoryTimeline`, passando os dados e handlers por props e preservando markup e classes.
+- **Problema & técnica:** Redução da responsabilidade visual concentrada em `CaseDetail`; `npm test` passou (9 testes) e `npm run build` passou.
 
 ---
