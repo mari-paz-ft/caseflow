@@ -3,6 +3,8 @@ package com.caseflow.service
 import com.caseflow.domain.model.CaseHistory
 import com.caseflow.domain.model.CaseRequest
 import com.caseflow.domain.model.Notification
+import com.caseflow.controller.dto.CaseHistoryDto
+import com.caseflow.controller.dto.NotificationDto
 import com.caseflow.repository.CaseHistoryRepository
 import com.caseflow.repository.NotificationRepository
 import org.springframework.stereotype.Service
@@ -30,6 +32,15 @@ class HistoryService(
     fun getHistoryForCase(caseId: UUID): List<CaseHistory> {
         return historyRepository.findByCaseRequestIdOrderByOccurredAtDesc(caseId)
     }
+
+    fun toDto(history: CaseHistory): CaseHistoryDto = CaseHistoryDto(
+        id = history.id,
+        caseId = history.caseRequest.id,
+        eventType = history.eventType,
+        actorSubject = history.actorSubject,
+        details = history.details,
+        occurredAt = history.occurredAt
+    )
 }
 
 @Service
@@ -67,4 +78,13 @@ class NotificationService(
     fun countUnread(userSubject: UUID): Long {
         return notificationRepository.countByRecipientSubjectAndReadAtIsNull(userSubject)
     }
+
+    fun toDto(notification: Notification): NotificationDto = NotificationDto(
+        id = notification.id,
+        caseId = notification.caseRequest.id,
+        title = notification.title,
+        message = notification.message,
+        readAt = notification.readAt,
+        createdAt = notification.createdAt
+    )
 }

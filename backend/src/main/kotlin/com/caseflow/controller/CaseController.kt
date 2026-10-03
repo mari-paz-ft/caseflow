@@ -150,16 +150,7 @@ class CaseController(
         // Verifica permissão de acesso
         caseService.getCaseById(id, authService.getCurrentUser())
         val historyList = historyService.getHistoryForCase(id)
-        val dtos = historyList.map {
-            CaseHistoryDto(
-                id = it.id,
-                caseId = id,
-                eventType = it.eventType,
-                actorSubject = it.actorSubject,
-                details = it.details,
-                occurredAt = it.occurredAt
-            )
-        }
+        val dtos = historyList.map(historyService::toDto)
         return ResponseEntity.ok(dtos)
     }
 
@@ -179,16 +170,7 @@ class CaseController(
     fun getNotifications(): ResponseEntity<List<NotificationDto>> {
         val user = authService.getCurrentUser()
         val notifs = notificationService.getNotificationsForUser(user.id)
-        val dtos = notifs.map {
-            NotificationDto(
-                id = it.id,
-                caseId = it.caseRequest.id,
-                title = it.title,
-                message = it.message,
-                readAt = it.readAt,
-                createdAt = it.createdAt
-            )
-        }
+        val dtos = notifs.map(notificationService::toDto)
         return ResponseEntity.ok(dtos)
     }
 
@@ -196,15 +178,6 @@ class CaseController(
     @Operation(summary = "Marcar notificação como lida")
     fun markNotificationRead(@PathVariable id: UUID): ResponseEntity<NotificationDto> {
         val notif = notificationService.markAsRead(id, authService.getCurrentUser().id)
-        return ResponseEntity.ok(
-            NotificationDto(
-                id = notif.id,
-                caseId = notif.caseRequest.id,
-                title = notif.title,
-                message = notif.message,
-                readAt = notif.readAt,
-                createdAt = notif.createdAt
-            )
-        )
+        return ResponseEntity.ok(notificationService.toDto(notif))
     }
 }
