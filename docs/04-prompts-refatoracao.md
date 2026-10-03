@@ -21,7 +21,7 @@ Este documento registra os prompts efetivamente utilizados para conduzir a audit
 | **T9** | Extração de `AuthService` com BCrypt e desacoplamento do Controller | `9b03930`, `5285ecc` | Concluído |
 | **T10** | Remoção de código morto comprovado e parâmetro ignorado | `c35a8ff` | Concluído |
 | **T20** | Relatório de execução da trilha mínima | `d1d9c0d` | Concluído; métricas finais bloqueadas pela falta de JDK |
-| **T21** | Fechamento do arquivo de prompts com histórico completo | *(registrado no commit de fechamento subsequente)* | Concluído |
+| **T21** | Fechamento do arquivo de prompts com histórico completo | `c0f3cad` | Concluído |
 
 As tarefas T5–T8 e T11–T19 pertencem à trilha completa e não foram executadas nesta rodada. T13 é opcional no plano.
 
@@ -78,7 +78,7 @@ As tarefas T5–T8 e T11–T19 pertencem à trilha completa e não foram executa
 - **Problema & técnica:** Rastreabilidade entre implementação e entregável. A medição pós-refatoração do Detekt e os testes ficaram registrados como pendentes porque o ambiente não possui Java Runtime.
 
 ### Tarefa T21 · Fechamento do registro de prompts
-- **Commit:** será informado no commit de fechamento subsequente, pois o hash de um commit não pode ser gravado no próprio conteúdo.
+- **Commit:** `c0f3cad` (a atualização deste índice com o hash ocorre no commit de fechamento seguinte; um commit não pode conter o próprio hash).
 - **Instrução executada:** Sincronizar os estados e hashes efetivos de T0–T20, documentando as etapas não executadas da trilha completa.
 - **Problema & técnica:** Fechamento do audit trail sem atribuir hashes fictícios nem declarar métricas não medidas.
 
