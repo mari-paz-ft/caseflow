@@ -179,8 +179,17 @@ class CaseService(
 
     private fun generateProtocol(): String {
         val dateStr = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE)
-        val randomDigits = Random.nextInt(1000, 9999)
-        return "CF-$dateStr-$randomDigits"
+        repeat(MAX_PROTOCOL_ATTEMPTS) {
+            val randomDigits = Random.nextInt(1000, 10_000)
+            val protocol = "CF-$dateStr-$randomDigits"
+            if (!caseRequestRepository.existsByProtocol(protocol)) {
+                return protocol
+            }
+        }
+        throw ConflictException(
+            "Não foi possível gerar um protocolo único após $MAX_PROTOCOL_ATTEMPTS tentativas",
+            "PROTOCOL_GENERATION_FAILED"
+        )
     }
 
     private fun createProcessingJob(caseRequest: CaseRequest): ProcessingJob =
@@ -193,4 +202,8 @@ class CaseService(
         )
 
     fun toDto(caseRequest: CaseRequest): CaseResponseDto = caseMapper.toDto(caseRequest)
+
+    private companion object {
+        const val MAX_PROTOCOL_ATTEMPTS = 5
+    }
 }

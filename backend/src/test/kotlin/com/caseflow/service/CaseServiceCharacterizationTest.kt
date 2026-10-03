@@ -75,6 +75,7 @@ class CaseServiceCharacterizationTest {
         historyService = mock(HistoryService::class.java)
 
         `when`(caseRequestRepository.save(any(CaseRequest::class.java))).thenAnswer { it.arguments[0] }
+        `when`(caseRequestRepository.existsByProtocol(anyString())).thenReturn(false)
         `when`(processingJobRepository.save(any(ProcessingJob::class.java))).thenAnswer { it.arguments[0] }
         `when`(processingResultRepository.findFirstByCaseRequestIdOrderByRunNumberDesc(any(UUID::class.java)))
             .thenReturn(Optional.empty())
@@ -93,6 +94,36 @@ class CaseServiceCharacterizationTest {
     @Nested
     @DisplayName("Criação de Caso (createCase)")
     inner class CreateCaseTests {
+
+        @Test
+        fun `deve tentar outro protocolo quando encontra colisao`() {
+            `when`(caseRequestRepository.existsByProtocol(anyString())).thenReturn(true, false)
+            val captor = org.mockito.ArgumentCaptor.forClass(CaseRequest::class.java)
+
+            caseService.createCase(
+                CreateCaseDto("Nova Solicitação", "Descrição detalhada suficiente para o teste"),
+                userOwner
+            )
+
+            verify(caseRequestRepository).save(captor.capture())
+            assertTrue(captor.value.protocol.matches(Regex("CF-\\d{8}-\\d{4}")))
+            verify(caseRequestRepository, times(2)).existsByProtocol(anyString())
+        }
+
+        @Test
+        fun `deve falhar após cinco protocolos em colisao`() {
+            `when`(caseRequestRepository.existsByProtocol(anyString())).thenReturn(true)
+
+            assertThrows(ConflictException::class.java) {
+                caseService.createCase(
+                    CreateCaseDto("Nova Solicitação", "Descrição detalhada suficiente para o teste"),
+                    userOwner
+                )
+            }
+
+            verify(caseRequestRepository, times(5)).existsByProtocol(anyString())
+            verify(caseRequestRepository, never()).save(any(CaseRequest::class.java))
+        }
 
         @Test
         fun `deve criar caso em status RASCUNHO com versao inicial 1 e protocolo formatado`() {

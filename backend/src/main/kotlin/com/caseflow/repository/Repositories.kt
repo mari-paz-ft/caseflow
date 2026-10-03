@@ -10,6 +10,7 @@ import java.util.UUID
 interface CaseRequestRepository : JpaRepository<CaseRequest, UUID> {
     fun findByOwnerSubjectOrderByCreatedAtDesc(ownerSubject: UUID): List<CaseRequest>
     fun findAllByOrderByCreatedAtDesc(): List<CaseRequest>
+    fun existsByProtocol(protocol: String): Boolean
 }
 
 @Repository
