@@ -100,7 +100,7 @@ class CaseService(
     }
 
     @Transactional
-    fun submitCase(id: UUID, dto: SubmitCaseDto, currentUser: AppUser, idempotencyKey: String?): CaseResponseDto {
+    fun submitCase(id: UUID, dto: SubmitCaseDto, currentUser: AppUser): CaseResponseDto {
         val caseRequest = caseRequestRepository.findById(id)
             .orElseThrow { ResourceNotFoundException("Solicitação não encontrada: $id") }
 
@@ -150,7 +150,7 @@ class CaseService(
     }
 
     @Transactional
-    fun retryCase(id: UUID, dto: RetryCaseDto, currentUser: AppUser, idempotencyKey: String?): CaseResponseDto {
+    fun retryCase(id: UUID, dto: RetryCaseDto, currentUser: AppUser): CaseResponseDto {
         if (currentUser.role != RoleName.ROLE_ADMIN) {
             throw ForbiddenException("Apenas administradores podem solicitar reprocessamento")
         }

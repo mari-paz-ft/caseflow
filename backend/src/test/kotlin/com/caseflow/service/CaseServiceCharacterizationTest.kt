@@ -150,7 +150,7 @@ class CaseServiceCharacterizationTest {
             `when`(caseRequestRepository.findById(caseId)).thenReturn(Optional.of(existingCase))
 
             val submitDto = SubmitCaseDto(version = 1L)
-            val result = caseService.submitCase(caseId, submitDto, userOwner, idempotencyKey = "key-123")
+            val result = caseService.submitCase(caseId, submitDto, userOwner)
 
             assertEquals(CaseStatus.ENVIADA, result.status)
             assertEquals(2L, result.version)
@@ -185,7 +185,7 @@ class CaseServiceCharacterizationTest {
             `when`(caseRequestRepository.findById(caseId)).thenReturn(Optional.of(submittedCase))
 
             val submitDto = SubmitCaseDto(version = 1L)
-            val result = caseService.submitCase(caseId, submitDto, userOwner, idempotencyKey = "key-repeat")
+            val result = caseService.submitCase(caseId, submitDto, userOwner)
 
             assertEquals(CaseStatus.ENVIADA, result.status)
             assertEquals(2L, result.version)
@@ -204,7 +204,7 @@ class CaseServiceCharacterizationTest {
 
             val submitDto = SubmitCaseDto(version = 1L)
             assertThrows(ForbiddenException::class.java) {
-                caseService.submitCase(caseId, submitDto, userOther, null)
+                caseService.submitCase(caseId, submitDto, userOther)
             }
         }
 
@@ -221,7 +221,7 @@ class CaseServiceCharacterizationTest {
 
             val submitDto = SubmitCaseDto(version = 1L) // versão enviada defasada
             val ex = assertThrows(ConflictException::class.java) {
-                caseService.submitCase(caseId, submitDto, userOwner, null)
+                caseService.submitCase(caseId, submitDto, userOwner)
             }
             assertEquals("VERSION_MISMATCH", ex.errorCode)
         }
@@ -239,7 +239,7 @@ class CaseServiceCharacterizationTest {
 
             val submitDto = SubmitCaseDto(version = 1L)
             val ex = assertThrows(ConflictException::class.java) {
-                caseService.submitCase(caseId, submitDto, userOwner, null)
+                caseService.submitCase(caseId, submitDto, userOwner)
             }
             assertEquals("NO_DOCUMENTS_ATTACHED", ex.errorCode)
         }
@@ -266,7 +266,7 @@ class CaseServiceCharacterizationTest {
             `when`(caseRequestRepository.findById(caseId)).thenReturn(Optional.of(caseInFailure))
 
             val retryDto = RetryCaseDto(justification = "Disco restaurado pelo time de infraestrutura.")
-            val result = caseService.retryCase(caseId, retryDto, userAdmin, "idemp-key")
+            val result = caseService.retryCase(caseId, retryDto, userAdmin)
 
             assertEquals(CaseStatus.ENVIADA, result.status)
             assertEquals(4L, result.version)
@@ -288,7 +288,7 @@ class CaseServiceCharacterizationTest {
             val retryDto = RetryCaseDto(justification = "Tentativa de solicitante comum")
 
             assertThrows(ForbiddenException::class.java) {
-                caseService.retryCase(caseId, retryDto, userOwner, null)
+                caseService.retryCase(caseId, retryDto, userOwner)
             }
             verify(caseRequestRepository, never()).findById(any(UUID::class.java))
         }
@@ -305,7 +305,7 @@ class CaseServiceCharacterizationTest {
 
             val retryDto = RetryCaseDto(justification = "Reprocessar caso ja aprovado")
             val ex = assertThrows(ConflictException::class.java) {
-                caseService.retryCase(caseId, retryDto, userAdmin, null)
+                caseService.retryCase(caseId, retryDto, userAdmin)
             }
             assertEquals("INVALID_STATE_FOR_RETRY", ex.errorCode)
         }
