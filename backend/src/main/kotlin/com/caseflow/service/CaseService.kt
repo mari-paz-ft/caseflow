@@ -6,9 +6,7 @@ import com.caseflow.domain.exception.*
 import com.caseflow.domain.model.*
 import com.caseflow.repository.CaseRequestRepository
 import com.caseflow.repository.ProcessingJobRepository
-import com.caseflow.repository.ProcessingResultRepository
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.caseflow.service.mapper.CaseMapper
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -21,10 +19,9 @@ import kotlin.random.Random
 class CaseService(
     private val caseRequestRepository: CaseRequestRepository,
     private val processingJobRepository: ProcessingJobRepository,
-    private val processingResultRepository: ProcessingResultRepository,
     private val analysisEngineService: AnalysisEngineService,
     private val historyService: HistoryService,
-    private val objectMapper: ObjectMapper
+    private val caseMapper: CaseMapper
 ) {
     @Transactional
     fun createCase(dto: CreateCaseDto, currentUser: AppUser): CaseResponseDto {
@@ -196,54 +193,5 @@ class CaseService(
         return "CF-$dateStr-$randomDigits"
     }
 
-    fun toDto(caseRequest: CaseRequest): CaseResponseDto {
-        val latestResult = processingResultRepository.findFirstByCaseRequestIdOrderByRunNumberDesc(caseRequest.id)
-            .map { res ->
-                val reasonList: List<String> = try {
-                    objectMapper.readValue(res.reasonCodes, object : TypeReference<List<String>>() {})
-                } catch (e: Exception) {
-                    emptyList()
-                }
-                ProcessingResultDto(
-                    id = res.id,
-                    runNumber = res.runNumber,
-                    decision = res.decision,
-                    reasonCodes = reasonList,
-                    rulesVersion = res.rulesVersion,
-                    evaluatedAt = res.evaluatedAt
-                )
-            }.orElse(null)
-
-        val docDtos = caseRequest.documents.map { doc ->
-            CaseDocumentDto(
-                id = doc.id,
-                category = doc.category,
-                fileName = doc.fileName,
-                fileSize = doc.fileSize,
-                contentType = doc.contentType,
-                validUntil = doc.validUntil,
-                uploadState = doc.uploadState,
-                createdAt = doc.createdAt
-            )
-        }
-
-        return CaseResponseDto(
-            id = caseRequest.id,
-            protocol = caseRequest.protocol,
-            ownerSubject = caseRequest.ownerSubject,
-            ownerEmail = caseRequest.ownerEmail,
-            title = caseRequest.title,
-            description = caseRequest.description,
-            caseType = caseRequest.caseType,
-            status = caseRequest.status,
-            version = caseRequest.version,
-            processingRun = caseRequest.processingRun,
-            rulesVersion = caseRequest.rulesVersion,
-            submittedAt = caseRequest.submittedAt,
-            createdAt = caseRequest.createdAt,
-            updatedAt = caseRequest.updatedAt,
-            documents = docDtos,
-            latestResult = latestResult
-        )
-    }
+    fun toDto(caseRequest: CaseRequest): CaseResponseDto = caseMapper.toDto(caseRequest)
 }

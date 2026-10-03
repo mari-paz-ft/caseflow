@@ -17,6 +17,7 @@ import com.caseflow.domain.model.ProcessingJob
 import com.caseflow.repository.CaseRequestRepository
 import com.caseflow.repository.ProcessingJobRepository
 import com.caseflow.repository.ProcessingResultRepository
+import com.caseflow.service.mapper.CaseMapper
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -78,13 +79,14 @@ class CaseServiceCharacterizationTest {
         `when`(processingResultRepository.findFirstByCaseRequestIdOrderByRunNumberDesc(any(UUID::class.java)))
             .thenReturn(Optional.empty())
 
+        val caseMapper = CaseMapper(processingResultRepository, objectMapper)
+
         caseService = CaseService(
             caseRequestRepository,
             processingJobRepository,
-            processingResultRepository,
             analysisEngineService,
             historyService,
-            objectMapper
+            caseMapper
         )
     }
 
