@@ -29,10 +29,11 @@ Este documento registra os prompts efetivamente utilizados para conduzir a audit
 | **T14** | Separar tipos de segurança e serviços de suporte | `13233e3` | Concluído |
 | **T15** | Configurar Vitest e teste de fumaça do `StatusBadge` | `1fa1190` | Concluído; teste e build passaram |
 | **T16** | Modularizar cliente de API e fallback local | `fce3a4a` | Concluído; 4 testes e build passaram |
+| **T17** | Extrair hook `useCasesList` e tipar notificações | `93a1dd9`, `4e75400` | Concluído; 7 testes e build passaram |
 | **T20** | Relatório de execução da trilha mínima | `d1d9c0d` | Concluído; métricas finais bloqueadas pela falta de JDK |
 | **T21** | Fechamento do arquivo de prompts com histórico completo | `c0f3cad` | Concluído |
 
-As tarefas T13 e T17–T19 da trilha completa ainda estão pendentes. T13 é opcional e foi diferida para evitar atualização de dependências sem validação backend disponível.
+As tarefas T13 e T18–T19 da trilha completa ainda estão pendentes. T13 é opcional e foi diferida para evitar atualização de dependências sem validação backend disponível.
 
 ---
 
@@ -135,5 +136,10 @@ As tarefas T13 e T17–T19 da trilha completa ainda estão pendentes. T13 é opc
 - **Commit:** `fce3a4a`
 - **Instrução executada:** Separar dados iniciais (`fixtures.ts`), armazenamento mock (`mockAdapter.ts`), cliente/fallback HTTP (`httpClient.ts`) e manter a assinatura pública de `ApiService`.
 - **Problema & técnica:** Extração de responsabilidades e centralização do fallback num helper testável. `npm test` passou (4 testes) e `npm run build` passou.
+
+### Tarefa T17 · Hook de listagem no `App.tsx`
+- **Commits:** `93a1dd9`, `4e75400`
+- **Instrução executada:** Extrair o hook `useCasesList(currentUser)`, as funções puras `filterCases` e `computeStats`, tipar `NotificationItem[]` e substituir o cast `any` por parsing do filtro de status.
+- **Problema & técnica:** Separação de carregamento, filtros e estatísticas da tela; testes unitários cobrem filtro, métricas e parsing. `npm test` passou (7 testes) e `npm run build` passou. O adaptador mock agora também tolera ambientes sem `localStorage`.
 
 ---
