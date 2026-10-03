@@ -108,7 +108,13 @@ class CaseService(
             throw ForbiddenException("Apenas o autor pode enviar a solicitação")
         }
         if (caseRequest.status != CaseStatus.RASCUNHO) {
-            if (caseRequest.status == CaseStatus.ENVIADA || caseRequest.status == CaseStatus.PROCESSANDO || caseRequest.status == CaseStatus.APROVADA || caseRequest.status == CaseStatus.REJEITADA) {
+            if (caseRequest.status in setOf(
+                    CaseStatus.ENVIADA,
+                    CaseStatus.PROCESSANDO,
+                    CaseStatus.APROVADA,
+                    CaseStatus.REJEITADA
+                )
+            ) {
                 // Suporte a Idempotência: caso já enviada anteriormente
                 return toDto(caseRequest)
             }
