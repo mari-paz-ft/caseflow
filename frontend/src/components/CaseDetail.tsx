@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { CaseRequest, CaseHistory, User, DocumentCategory } from '../types';
+import React from 'react';
+import { User } from '../types';
 import { StatusBadge } from './StatusBadge';
-import { ApiService } from '../services/api';
+import { useCaseDetail } from '../hooks/useCaseDetail';
+import { DocumentUploadForm } from './CaseDetail/DocumentUploadForm';
+import { CaseHistoryTimeline } from './CaseDetail/CaseHistoryTimeline';
+import { RetryModal } from './CaseDetail/RetryModal';
 import {
   ArrowLeft,
-  UploadCloud,
   FileText,
   Trash2,
   Send,
@@ -12,8 +14,6 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
-  History,
-  Calendar,
   Layers,
   FileCheck,
   Download,
@@ -33,49 +33,34 @@ export const CaseDetail: React.FC<Props> = ({
   onBack,
   onRefreshList
 }) => {
-  const [caseData, setCaseData] = useState<CaseRequest | null>(null);
-  const [histories, setHistories] = useState<CaseHistory[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Upload form state
-  const [uploadCategory, setUploadCategory] = useState<DocumentCategory>('IDENTIFICACAO');
-  const [validUntil, setValidUntil] = useState<string>('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-
-  // Retry modal state
-  const [isRetryModalOpen, setIsRetryModalOpen] = useState(false);
-  const [retryJustification, setRetryJustification] = useState('');
-  const [isRetrying, setIsRetrying] = useState(false);
-
-  // Submit state
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const loadCase = async () => {
-    try {
-      const data = await ApiService.getCaseById(caseId, currentUser);
-      setCaseData(data);
-      if (data) {
-        const h = await ApiService.getHistory(data.id, currentUser);
-        setHistories(h);
-      }
-    } catch (err) {
-      console.error('Erro ao carregar detalhes:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadCase();
-    // Polling simulation if processing
-    const interval = setInterval(() => {
-      if (caseData?.status === 'PROCESSANDO') {
-        loadCase();
-      }
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [caseId, currentUser, caseData?.status]);
+  const {
+    caseData,
+    histories,
+    loading,
+    uploadCategory,
+    setUploadCategory,
+    validUntil,
+    setValidUntil,
+    selectedFile,
+    setSelectedFile,
+    isUploading,
+    isRetryModalOpen,
+    setIsRetryModalOpen,
+    retryJustification,
+    setRetryJustification,
+    isRetrying,
+    isSubmitting,
+    isOwner,
+    isAdmin,
+    isDraft,
+    isTechnicalFailure,
+    hasIdDoc,
+    hasAddressDoc,
+    handleUpload,
+    handleDeleteDocument,
+    handleSubmitCase,
+    handleRetrySubmit,
+  } = useCaseDetail(caseId, currentUser, onRefreshList);
 
   if (loading || !caseData) {
     return (
@@ -87,95 +72,6 @@ export const CaseDetail: React.FC<Props> = ({
       </div>
     );
   }
-
-  const isOwner = caseData.ownerSubject === currentUser.id;
-  const isAdmin = currentUser.role === 'ROLE_ADMIN';
-  const isDraft = caseData.status === 'RASCUNHO';
-  const isTechnicalFailure = caseData.status === 'FALHA_TECNICA';
-
-  // Checklist
-  const hasIdDoc = caseData.documents.some(d => d.category === 'IDENTIFICACAO');
-  const hasAddressDoc = caseData.documents.some(d => d.category === 'COMPROVANTE_ENDERECO');
-
-  const handleUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedFile) return;
-
-    try {
-      setIsUploading(true);
-      await ApiService.uploadDocument(
-        caseData.id,
-        uploadCategory,
-        validUntil || null,
-        selectedFile,
-        currentUser
-      );
-      setSelectedFile(null);
-      setValidUntil('');
-      await loadCase();
-      onRefreshList();
-    } catch (err: any) {
-      alert(err.message || 'Falha no upload do documento');
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleDeleteDocument = async (docId: string) => {
-    if (!confirm('Deseja realmente remover este documento?')) return;
-    try {
-      await ApiService.deleteDocument(caseData.id, docId, currentUser);
-      await loadCase();
-      onRefreshList();
-    } catch (err: any) {
-      alert(err.message || 'Erro ao remover anexo');
-    }
-  };
-
-  const handleSubmitCase = async () => {
-    if (caseData.documents.length === 0) {
-      alert('Envio bloqueado: adicione pelo menos um documento.');
-      return;
-    }
-
-    if (!hasIdDoc || !hasAddressDoc) {
-      const confirmMsg =
-        'Atenção: sua solicitação ainda não possui todos os documentos obrigatórios (Identificação e Comprovante de Residência). Deseja enviar mesmo assim? (A análise automática resultará em rejeição).';
-      if (!confirm(confirmMsg)) return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      await ApiService.submitCase(caseData.id, caseData.version, currentUser);
-      await loadCase();
-      onRefreshList();
-    } catch (err: any) {
-      alert(err.message || 'Erro ao enviar solicitação');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleRetrySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (retryJustification.trim().length < 10 || retryJustification.trim().length > 500) {
-      alert('A justificativa deve ter entre 10 e 500 caracteres.');
-      return;
-    }
-
-    try {
-      setIsRetrying(true);
-      await ApiService.retryCase(caseData.id, retryJustification.trim(), currentUser);
-      setIsRetryModalOpen(false);
-      setRetryJustification('');
-      await loadCase();
-      onRefreshList();
-    } catch (err: any) {
-      alert(err.message || 'Erro ao reprocessar');
-    } finally {
-      setIsRetrying(false);
-    }
-  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-150">
@@ -455,146 +351,30 @@ export const CaseDetail: React.FC<Props> = ({
 
           {/* Upload Form (only in Rascunho for owner) */}
           {isOwner && isDraft && caseData.documents.length < 3 && (
-            <form onSubmit={handleUpload} className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3 mt-4">
-              <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center space-x-1.5">
-                <UploadCloud className="w-4 h-4 text-brand-600" />
-                <span>Anexar Novo Arquivo</span>
-              </h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    Categoria *
-                  </label>
-                  <select
-                    value={uploadCategory}
-                    onChange={e => setUploadCategory(e.target.value as DocumentCategory)}
-                    className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
-                  >
-                    <option value="IDENTIFICACAO">IDENTIFICACAO (RG/CNH)</option>
-                    <option value="COMPROVANTE_ENDERECO">COMPROVANTE_ENDERECO</option>
-                    <option value="COMPLEMENTAR">COMPLEMENTAR</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    Data de Validade (opcional)
-                  </label>
-                  <input
-                    type="date"
-                    value={validUntil}
-                    onChange={e => setValidUntil(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    Arquivo (PDF até 5MB) *
-                  </label>
-                  <input
-                    type="file"
-                    required
-                    accept=".pdf,application/pdf"
-                    onChange={e => setSelectedFile(e.target.files?.[0] || null)}
-                    className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end pt-1">
-                <button
-                  type="submit"
-                  disabled={isUploading || !selectedFile}
-                  className="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-colors"
-                >
-                  {isUploading ? 'Anexando...' : 'Confirmar Anexo'}
-                </button>
-              </div>
-            </form>
+            <DocumentUploadForm
+              category={uploadCategory}
+              onCategoryChange={setUploadCategory}
+              validUntil={validUntil}
+              onValidUntilChange={setValidUntil}
+              onFileSelected={setSelectedFile}
+              hasSelectedFile={selectedFile !== null}
+              isUploading={isUploading}
+              onSubmit={handleUpload}
+            />
           )}
         </div>
 
-        {/* History / Audit Trail */}
-        <div className="space-y-4 pt-6 border-t border-slate-100">
-          <h2 className="text-base font-bold text-slate-900 flex items-center space-x-2">
-            <History className="w-5 h-5 text-brand-600" />
-            <span>Histórico de Transições e Rastreabilidade</span>
-          </h2>
-
-          <div className="relative pl-6 border-l-2 border-slate-200 space-y-4 my-4">
-            {histories.map(h => (
-              <div key={h.id} className="relative group">
-                <div className="absolute -left-[31px] top-1.5 w-3 h-3 rounded-full bg-brand-600 ring-4 ring-white" />
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-bold text-slate-800">{h.eventType}</span>
-                    <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-mono">
-                      {h.actorSubject}
-                    </span>
-                  </div>
-                  <span className="text-slate-400 text-[11px] mt-0.5 sm:mt-0">
-                    {new Date(h.occurredAt).toLocaleString()}
-                  </span>
-                </div>
-                {h.details && <p className="text-xs text-slate-600 mt-1">{h.details}</p>}
-              </div>
-            ))}
-          </div>
-        </div>
+        <CaseHistoryTimeline histories={histories} />
       </div>
 
-      {/* Admin Retry Modal */}
-      {isRetryModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-lg p-6 space-y-4">
-            <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
-              <RotateCcw className="w-5 h-5 text-amber-600" />
-              <span>Solicitar Reprocessamento Administrativo</span>
-            </h3>
-            <p className="text-xs text-slate-600">
-              Conforme as regras de governança, o administrador pode solicitar nova conferência para casos em FALHA TÉCNICA mediante justificativa formal auditável (10 a 500 caracteres).
-            </p>
-
-            <form onSubmit={handleRetrySubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Justificativa Operacional *
-                </label>
-                <textarea
-                  required
-                  rows={3}
-                  value={retryJustification}
-                  onChange={e => setRetryJustification(e.target.value)}
-                  placeholder="Ex: Armazenamento em disco restaurado e verificado com sucesso pelo time de infraestrutura."
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-                />
-                <span className="text-[10px] text-slate-400">
-                  {retryJustification.length}/500 caracteres
-                </span>
-              </div>
-
-              <div className="flex justify-end space-x-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsRetryModalOpen(false)}
-                  className="px-3 py-1.5 text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isRetrying || retryJustification.trim().length < 10}
-                  className="px-4 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-50 rounded-lg shadow-sm"
-                >
-                  {isRetrying ? 'Reprocessando...' : 'Confirmar Reprocessamento'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <RetryModal
+        isOpen={isRetryModalOpen}
+        isRetrying={isRetrying}
+        justification={retryJustification}
+        onJustificationChange={setRetryJustification}
+        onClose={() => setIsRetryModalOpen(false)}
+        onSubmit={handleRetrySubmit}
+      />
     </div>
   );
 };

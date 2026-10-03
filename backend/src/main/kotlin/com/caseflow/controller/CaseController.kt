@@ -1,11 +1,7 @@
 package com.caseflow.controller
 
-import com.caseflow.config.CurrentUserContext
 import com.caseflow.controller.dto.*
 import com.caseflow.domain.enums.DocumentCategory
-import com.caseflow.domain.exception.ResourceNotFoundException
-import com.caseflow.domain.model.AppUser
-import com.caseflow.repository.AppUserRepository
 import com.caseflow.service.*
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -29,15 +25,8 @@ class CaseController(
     private val documentService: DocumentService,
     private val historyService: HistoryService,
     private val notificationService: NotificationService,
-    private val appUserRepository: AppUserRepository
+    private val authService: AuthService
 ) {
-
-    private fun getCurrentUser(): AppUser {
-        return CurrentUserContext.get()
-            ?: appUserRepository.findByEmail("solicitante@caseflow.local").orElseThrow {
-                ResourceNotFoundException("Usuário padrão não encontrado")
-            }
-    }
 
     @GetMapping("/csrf")
     @Operation(summary = "Obter token CSRF vinculado à sessão")
@@ -48,7 +37,7 @@ class CaseController(
     @GetMapping("/me")
     @Operation(summary = "Identidade e capacidades do usuário logado")
     fun getMe(): UserDto {
-        val user = getCurrentUser()
+        val user = authService.getCurrentUser()
         return UserDto(
             id = user.id,
             email = user.email,
@@ -60,11 +49,7 @@ class CaseController(
     @PostMapping("/auth/login")
     @Operation(summary = "Login com e-mail e senha")
     fun login(@RequestBody request: LoginRequestDto): ResponseEntity<LoginResponseDto> {
-        val user = appUserRepository.findByEmail(request.email)
-            .orElseThrow { ResourceNotFoundException("Usuário ou senha incorretos") }
-        val token = "mock-token-${user.email}"
-        val userDto = UserDto(user.id, user.email, user.fullName, user.role)
-        return ResponseEntity.ok(LoginResponseDto(token, userDto))
+        return ResponseEntity.ok(authService.login(request))
     }
 
     @PostMapping("/logout")
@@ -76,7 +61,7 @@ class CaseController(
     @PostMapping("/cases")
     @Operation(summary = "Criar novo rascunho de solicitação")
     fun createCase(@Valid @RequestBody dto: CreateCaseDto): ResponseEntity<CaseResponseDto> {
-        val created = caseService.createCase(dto, getCurrentUser())
+        val created = caseService.createCase(dto, authService.getCurrentUser())
         val location = URI.create("/bff/v1/cases/${created.id}")
         return ResponseEntity.created(location).body(created)
     }
@@ -84,14 +69,14 @@ class CaseController(
     @GetMapping("/cases")
     @Operation(summary = "Listar solicitações acessíveis ao usuário")
     fun listCases(): ResponseEntity<List<CaseResponseDto>> {
-        val cases = caseService.listCases(getCurrentUser())
+        val cases = caseService.listCases(authService.getCurrentUser())
         return ResponseEntity.ok(cases)
     }
 
     @GetMapping("/cases/{id}")
     @Operation(summary = "Consultar detalhe da solicitação")
     fun getCaseById(@PathVariable id: UUID): ResponseEntity<CaseResponseDto> {
-        val case = caseService.getCaseById(id, getCurrentUser())
+        val case = caseService.getCaseById(id, authService.getCurrentUser())
         return ResponseEntity.ok(case)
     }
 
@@ -101,7 +86,7 @@ class CaseController(
         @PathVariable id: UUID,
         @Valid @RequestBody dto: UpdateCaseDto
     ): ResponseEntity<CaseResponseDto> {
-        val updated = caseService.updateCase(id, dto, getCurrentUser())
+        val updated = caseService.updateCase(id, dto, authService.getCurrentUser())
         return ResponseEntity.ok(updated)
     }
 
@@ -113,8 +98,8 @@ class CaseController(
         @RequestParam(value = "validUntil", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) validUntil: LocalDate?,
         @RequestParam("file") file: MultipartFile
     ): ResponseEntity<CaseDocumentDto> {
-        val doc = documentService.uploadDocument(id, category, validUntil, file, getCurrentUser())
-        val updatedCase = caseService.getCaseById(id, getCurrentUser())
+        val doc = documentService.uploadDocument(id, category, validUntil, file, authService.getCurrentUser())
+        val updatedCase = caseService.getCaseById(id, authService.getCurrentUser())
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .header("X-Case-Version", updatedCase.version.toString())
@@ -127,8 +112,8 @@ class CaseController(
         @PathVariable id: UUID,
         @PathVariable documentId: UUID
     ): ResponseEntity<Void> {
-        documentService.deleteDocument(caseId = id, documentId = documentId, currentUser = getCurrentUser())
-        val updatedCase = caseService.getCaseById(id, getCurrentUser())
+        documentService.deleteDocument(caseId = id, documentId = documentId, currentUser = authService.getCurrentUser())
+        val updatedCase = caseService.getCaseById(id, authService.getCurrentUser())
         return ResponseEntity
             .noContent()
             .header("X-Case-Version", updatedCase.version.toString())
@@ -141,7 +126,7 @@ class CaseController(
         @PathVariable id: UUID,
         @PathVariable documentId: UUID
     ): ResponseEntity<ByteArray> {
-        val content = documentService.getDocumentContent(id, documentId, getCurrentUser())
+        val content = documentService.getDocumentContent(id, documentId, authService.getCurrentUser())
         return ResponseEntity.ok()
             .contentType(MediaType.APPLICATION_PDF)
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"document-$documentId.pdf\"")
@@ -155,7 +140,7 @@ class CaseController(
         @RequestBody dto: SubmitCaseDto,
         @RequestHeader(value = "Idempotency-Key", required = false) idempotencyKey: String?
     ): ResponseEntity<CaseResponseDto> {
-        val submitted = caseService.submitCase(id, dto, getCurrentUser(), idempotencyKey)
+        val submitted = caseService.submitCase(id, dto, authService.getCurrentUser())
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(submitted)
     }
 
@@ -163,18 +148,9 @@ class CaseController(
     @Operation(summary = "Consultar histórico de transições da solicitação")
     fun getHistory(@PathVariable id: UUID): ResponseEntity<List<CaseHistoryDto>> {
         // Verifica permissão de acesso
-        caseService.getCaseById(id, getCurrentUser())
+        caseService.getCaseById(id, authService.getCurrentUser())
         val historyList = historyService.getHistoryForCase(id)
-        val dtos = historyList.map {
-            CaseHistoryDto(
-                id = it.id,
-                caseId = id,
-                eventType = it.eventType,
-                actorSubject = it.actorSubject,
-                details = it.details,
-                occurredAt = it.occurredAt
-            )
-        }
+        val dtos = historyList.map(historyService::toDto)
         return ResponseEntity.ok(dtos)
     }
 
@@ -185,41 +161,23 @@ class CaseController(
         @Valid @RequestBody dto: RetryCaseDto,
         @RequestHeader(value = "Idempotency-Key", required = false) idempotencyKey: String?
     ): ResponseEntity<CaseResponseDto> {
-        val retried = caseService.retryCase(id, dto, getCurrentUser(), idempotencyKey)
+        val retried = caseService.retryCase(id, dto, authService.getCurrentUser())
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(retried)
     }
 
     @GetMapping("/notifications")
     @Operation(summary = "Listar notificações do usuário")
     fun getNotifications(): ResponseEntity<List<NotificationDto>> {
-        val user = getCurrentUser()
+        val user = authService.getCurrentUser()
         val notifs = notificationService.getNotificationsForUser(user.id)
-        val dtos = notifs.map {
-            NotificationDto(
-                id = it.id,
-                caseId = it.caseRequest.id,
-                title = it.title,
-                message = it.message,
-                readAt = it.readAt,
-                createdAt = it.createdAt
-            )
-        }
+        val dtos = notifs.map(notificationService::toDto)
         return ResponseEntity.ok(dtos)
     }
 
     @PatchMapping("/notifications/{id}")
     @Operation(summary = "Marcar notificação como lida")
     fun markNotificationRead(@PathVariable id: UUID): ResponseEntity<NotificationDto> {
-        val notif = notificationService.markAsRead(id, getCurrentUser().id)
-        return ResponseEntity.ok(
-            NotificationDto(
-                id = notif.id,
-                caseId = notif.caseRequest.id,
-                title = notif.title,
-                message = notif.message,
-                readAt = notif.readAt,
-                createdAt = notif.createdAt
-            )
-        )
+        val notif = notificationService.markAsRead(id, authService.getCurrentUser().id)
+        return ResponseEntity.ok(notificationService.toDto(notif))
     }
 }

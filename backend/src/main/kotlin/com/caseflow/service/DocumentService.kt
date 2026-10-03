@@ -23,6 +23,7 @@ import java.security.MessageDigest
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
+import java.util.HexFormat
 
 @Service
 class DocumentService(
@@ -166,6 +167,6 @@ class DocumentService(
     private fun ByteArray.sha256(): String {
         val md = MessageDigest.getInstance("SHA-256")
         val digest = md.digest(this)
-        return digest.fold("") { str, it -> str + "%02x".format(it) }
+        return HexFormat.of().formatHex(digest)
     }
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { CaseRequest, User, CreateCasePayload, CaseStatus } from './types';
-import { USERS, ApiService } from './services/api';
+import { User } from './types';
+import { USERS } from './services/api';
+import { parseStatusFilter, useCasesList } from './hooks/useCasesList';
 import { Navbar } from './components/Navbar';
 import { StatusBadge } from './components/StatusBadge';
 import { NewCaseModal } from './components/NewCaseModal';
@@ -20,66 +21,33 @@ import {
 
 export function App() {
   const [currentUser, setCurrentUser] = useState<User>(USERS[0]); // Solicitante por padrão
-  const [cases, setCases] = useState<CaseRequest[]>([]);
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<CaseStatus | 'TODOS'>('TODOS');
-  const [searchQuery, setSearchQuery] = useState('');
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isNotifsOpen, setIsNotifsOpen] = useState(false);
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const data = await ApiService.getCases(currentUser);
-      setCases(data);
-      const notifs = await ApiService.getNotifications(currentUser);
-      setNotifications(notifs);
-    } catch (err) {
-      console.error('Erro ao carregar dados:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    statusFilter,
+    setStatusFilter,
+    searchQuery,
+    setSearchQuery,
+    filteredCases,
+    stats,
+    notifications,
+    loading,
+    unreadCount,
+    loadData,
+    createCase,
+    markNotificationRead,
+  } = useCasesList(currentUser);
 
   useEffect(() => {
     setSelectedCaseId(null);
     loadData();
   }, [currentUser]);
 
-  const handleCreateCase = async (payload: CreateCasePayload) => {
-    const created = await ApiService.createCase(payload, currentUser);
-    await loadData();
+  const handleCreateCase = async (payload: Parameters<typeof createCase>[0]) => {
+    const created = await createCase(payload);
     setSelectedCaseId(created.id);
   };
-
-  const handleMarkNotifRead = async (id: string) => {
-    await ApiService.markNotificationRead(id, currentUser);
-    const notifs = await ApiService.getNotifications(currentUser);
-    setNotifications(notifs);
-  };
-
-  // Filtragem
-  const filteredCases = cases.filter(c => {
-    const matchesStatus = statusFilter === 'TODOS' || c.status === statusFilter;
-    const matchesSearch =
-      c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.protocol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesStatus && matchesSearch;
-  });
-
-  // Estatísticas
-  const stats = {
-    total: cases.length,
-    rascunho: cases.filter(c => c.status === 'RASCUNHO').length,
-    aprovadas: cases.filter(c => c.status === 'APROVADA').length,
-    rejeitadas: cases.filter(c => c.status === 'REJEITADA').length,
-    falhas: cases.filter(c => c.status === 'FALHA_TECNICA').length
-  };
-
-  const unreadCount = notifications.filter(n => !n.readAt).length;
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -217,7 +185,10 @@ export function App() {
                 <Filter className="w-4 h-4 text-slate-400" />
                 <select
                   value={statusFilter}
-                  onChange={e => setStatusFilter(e.target.value as any)}
+                  onChange={e => {
+                    const parsedFilter = parseStatusFilter(e.target.value);
+                    if (parsedFilter) setStatusFilter(parsedFilter);
+                  }}
                   className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                 >
                   <option value="TODOS">Todos os Status</option>
@@ -299,7 +270,7 @@ export function App() {
         isOpen={isNotifsOpen}
         onClose={() => setIsNotifsOpen(false)}
         notifications={notifications}
-        onMarkRead={handleMarkNotifRead}
+        onMarkRead={markNotificationRead}
         onSelectCase={id => setSelectedCaseId(id)}
       />
     </div>

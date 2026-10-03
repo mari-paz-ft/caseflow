@@ -67,8 +67,8 @@ flowchart TD
 
 ---
 
-## ADR 005: Idempotência em Operações de Submissão e Reprocessamento
+## ADR 005: Reenvio de Submissão e Cabeçalho de Idempotência
 * **Status:** Aceito
-* **Contexto:** Evitar duplicação acidental de execuções ou transições de estado quando houver reenvio de formulário ou timeouts de rede.
-* **Decisão:** Exigir cabeçalho `Idempotency-Key` nas rotas `POST /cases/{id}/submit` e `POST /cases/{id}/retry`.
-* **Consequência:** Chamadas com a mesma chave e payload retornam a mesma resposta original sem refazer o processamento.
+* **Contexto:** O frontend legado pode enviar o cabeçalho `Idempotency-Key`, mas a implementação atual não armazena nem compara seu valor.
+* **Decisão:** Manter o cabeçalho opcional para compatibilidade. O serviço de submissão retorna o estado atual sem criar outro job quando a solicitação já saiu de `RASCUNHO`; o retry continua restrito a `FALHA_TECNICA`.
+* **Consequência:** A proteção de reenvio é baseada no estado do caso, não na chave. Idempotência durável por chave exigiria armazenamento e contrato adicionais.

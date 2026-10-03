@@ -6,6 +6,7 @@ import com.caseflow.repository.*
 import org.slf4j.LoggerFactory
 import org.springframework.boot.CommandLineRunner
 import org.springframework.stereotype.Service
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -18,7 +19,8 @@ class DataSeederService(
     private val caseDocumentRepository: CaseDocumentRepository,
     private val processingResultRepository: ProcessingResultRepository,
     private val caseHistoryRepository: CaseHistoryRepository,
-    private val notificationRepository: NotificationRepository
+    private val notificationRepository: NotificationRepository,
+    private val passwordEncoder: PasswordEncoder
 ) : CommandLineRunner {
 
     private val logger = LoggerFactory.getLogger(DataSeederService::class.java)
@@ -37,7 +39,7 @@ class DataSeederService(
             id = userSubject,
             email = "solicitante@caseflow.local",
             fullName = "Carlos Silva (Solicitante)",
-            passwordHash = "senha123",
+            passwordHash = passwordEncoder.encode("senha123"),
             role = RoleName.ROLE_USER
         )
 
@@ -45,7 +47,7 @@ class DataSeederService(
             id = adminSubject,
             email = "admin@caseflow.local",
             fullName = "Mariana Paz (Administradora)",
-            passwordHash = "admin123",
+            passwordHash = passwordEncoder.encode("admin123"),
             role = RoleName.ROLE_ADMIN
         )
 
