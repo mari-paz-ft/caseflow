@@ -2,6 +2,35 @@
 
 Plano para o grupo · atualizado em 03/10/2026
 
+## Relatório de execução da trilha mínima
+
+Branch de trabalho: `refactoring` · base: `9de3812`.
+
+### Intervenções realizadas
+
+| Tarefa | Commit(s) | Resultado |
+|---|---|---|
+| T0 | `47c498d` | Inicialização da trilha de prompts e documentos. |
+| T1 | `1d06338` | Detekt 1.23.6 configurado; baseline documentado em `docs/detekt-baseline.md` com 44 ocorrências. |
+| T2 | `650d140` | Testes de caracterização de criação, envio, retry e conflito de versão. |
+| T3 | `a35cc0d` | Snapshots MockMvc para histórico, notificações e login. |
+| T4 | `f10598e` | Mapeamento extraído para `CaseMapper`. |
+| T9 | `9b03930`, `5285ecc` | `AuthService`, BCrypt no login e no seed, Controller desacoplado do repositório e testes de senha correta/incorreta. O filtro `X-User-Email` foi preservado. |
+| T10 | `c35a8ff` | Consultas de repositório sem chamadores removidas após busca no backend/frontend; parâmetro interno `idempotencyKey` removido, mantendo o cabeçalho HTTP. |
+
+### Verificação e métricas
+
+O baseline de T1 registra 44 violações: 1 `ComplexMethod` (McCabe 20), 3 `UnsafeCallOnNullableType`, 1 `TooManyFunctions`, 6 `MatchingDeclarationName`, 19 `WildcardImport` e 14 `MagicNumber`.
+
+Não foi possível executar `./gradlew test` nem `./gradlew detekt` após as mudanças: o ambiente não possui Java Runtime (`Unable to locate a Java Runtime`). Portanto, não há contagem pós-refatoração confiável e nenhuma redução foi presumida. `git diff --check` passou antes dos commits; isso verifica whitespace, não substitui compilação ou testes. O comparativo Detekt permanece pendente de execução em ambiente com JDK compatível.
+
+### Escopo preservado e próximos passos
+
+- O cabeçalho `X-User-Email` permanece no `HeaderAuthFilter` para manter compatibilidade com o frontend atual.
+- `/csrf`, `/logout` e a assinatura HTTP de `Idempotency-Key` foram mantidos; apenas o argumento ignorado deixou de ser passado internamente.
+- T5–T8 e T11–T19 pertencem à trilha completa e não foram executadas. T13 é opcional conforme o plano.
+- Antes da entrega, executar `./gradlew test` e `./gradlew detekt` em um ambiente com Java e registrar os números finais. O build do frontend também deve ser executado conforme o checklist do plano.
+
 ## Como ler este documento
 
 Este documento traz duas versões do mesmo plano:
